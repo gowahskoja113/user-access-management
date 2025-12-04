@@ -1,6 +1,5 @@
 package com.r2s.auth.security;
 
-import com.r2s.auth.security.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,12 +16,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
-@RequiredArgsConstructor // Tự tạo Constructor (thay cho dòng 7-10 trong ảnh hướng dẫn)
-public class JwtFilter extends OncePerRequestFilter { // <--- QUAN TRỌNG: Phải có dòng này mới hết lỗi
+@RequiredArgsConstructor
+public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
-    // Lưu ý: Dùng Interface UserDetailsService cho chuẩn Spring, hoặc dùng CustomUserDetailsService cũng được
     private final UserDetailsService userDetailsService;
 
     @Override
@@ -36,8 +34,8 @@ public class JwtFilter extends OncePerRequestFilter { // <--- QUAN TRỌNG: Ph�
 
         // 1. Kiểm tra header có chứa Bearer Token không
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7); // Cắt bỏ chữ "Bearer "
-            username = jwtUtil.extractUsername(token); // Lấy username từ token
+            token = authHeader.substring(7);
+            username = jwtUtil.extractUsername(token);
         }
 
         // 2. Nếu có username và chưa đăng nhập (Context null)

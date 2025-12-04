@@ -34,7 +34,7 @@ public class AuthService {
         User user = new User();
         user.setUsername(request.username());
         user.setPassword(passwordEncoder.encode(request.password()));
-        user.setRole("USER");
+        user.setRole(request.role());
 
         userRepo.save(user);
     }

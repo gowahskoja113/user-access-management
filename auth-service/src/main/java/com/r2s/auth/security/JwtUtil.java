@@ -19,7 +19,7 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long jwtExpirationInMs;
 
-    // 1. Tạo Token (Đã sửa lỗi dùng biến thời gian từ config)
+    // 1. Tạo Token
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
@@ -39,7 +39,7 @@ public class JwtUtil {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // 4. Hàm Generic để lấy bất kỳ thông tin nào (Giúp code gọn hơn)
+    // 4. Hàm Generic để lấy bất kỳ thông tin nào
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
