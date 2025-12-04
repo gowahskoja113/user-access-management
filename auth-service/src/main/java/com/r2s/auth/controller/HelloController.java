@@ -1,4 +1,4 @@
-package com.r2s.auth;
+package com.r2s.auth.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class HelloController {
     @GetMapping("/hello")
     public String hello() {
-        return "Hello from User Service";
+        return "Hello from Auth Service";
     }
 }
