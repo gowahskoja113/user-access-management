@@ -3,6 +3,7 @@ package com.r2s.auth.service;
 import com.r2s.auth.dto.response.AuthResponse;
 import com.r2s.auth.dto.request.LoginRequest;
 import com.r2s.auth.dto.request.RegisterRequest;
+import com.r2s.auth.entity.Role;
 import com.r2s.auth.entity.User;
 import com.r2s.auth.repository.UserRepository;
 import com.r2s.auth.security.JwtUtil;
@@ -34,7 +35,14 @@ public class AuthService {
         User user = new User();
         user.setUsername(request.username());
         user.setPassword(passwordEncoder.encode(request.password()));
-        user.setRole(request.role());
+
+        if (request.role() == null) {
+            user.setRole(Role.ROLE_USER);
+        } else {
+            user.setRole(request.role());
+        }
+        user.setEmail(request.email());
+        user.setName(request.name());
 
         userRepo.save(user);
     }
