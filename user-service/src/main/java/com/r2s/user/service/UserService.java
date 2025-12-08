@@ -1,10 +1,10 @@
 package com.r2s.user.service;
 
+import com.r2s.core.entity.User;
+import com.r2s.core.repository.UserRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.response.UserResponse;
-import com.r2s.user.entity.User;
 import com.r2s.user.mapper.UserMapper;
-import com.r2s.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
@@ -36,8 +35,8 @@ public class UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
+        user.setName(request.name());
+        user.setEmail(request.email());
 
         User savedUser = userRepository.save(user);
 
