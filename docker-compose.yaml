@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # 1. DATABASE POSTGRES
+  postgres-db:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Passw0rd
+      POSTGRES_DB: auth-service  # Database mặc định
+    ports:
+      - "55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # 2. AUTH SERVICE
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/auth-service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Passw0rd
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres-db
+
+  # 3. USER SERVICE
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      # --- ĐÃ SỬA DÒNG NÀY ---
+      # Trỏ về 'auth-service' để dùng chung dữ liệu User với Auth Service
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/auth-service
+      # -----------------------
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Passw0rd
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres-db
+
+# Đăng ký volume
+volumes:
+  postgres_data:

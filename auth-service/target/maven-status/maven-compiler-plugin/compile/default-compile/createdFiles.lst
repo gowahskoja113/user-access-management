@@ -1,0 +1,9 @@
+com\r2s\auth\controller\AuthController.class
+com\r2s\auth\dto\response\AuthResponse.class
+com\r2s\auth\AuthServiceApplication.class
+com\r2s\auth\dto\request\RegisterRequest.class
+com\r2s\auth\config\SecurityConfig.class
+com\r2s\auth\controller\HelloController.class
+com\r2s\auth\dto\request\LoginRequest.class
+com\r2s\auth\service\AuthService.class
+com\r2s\auth\controller\RoleController.class
