@@ -13,7 +13,7 @@ public class UserMapper {
         }
 
         return new UserResponse(
-                user.getRole() != null ? user.getRole().name() : null,
+                user.getRole() != null ? user.getRole() : null,
                 user.getEmail(),
                 user.getName(),
                 user.getUsername()

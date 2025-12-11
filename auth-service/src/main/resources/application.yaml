@@ -5,9 +5,8 @@ spring:
   application:
     name: auth-service
   profiles:
-    active: dev # Mặc định chạy Local
+    active: dev
 
-# Cấu hình JWT (Dùng chung cho cả Dev và Docker)
 jwt:
   secret: IGtr+uHjE2NDtJR7x37IqqEFAG0oj4LAcWaQlcPAoSqW05g3MtQC3ZaQDKmSme/0X72eAuLPpNfVbBYdmAd23Q==
   expiration: 3600000

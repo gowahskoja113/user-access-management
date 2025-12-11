@@ -31,20 +31,18 @@ public class AuthService {
     @Transactional
     public void register(RegisterRequest request) {
         if (userRepo.findByUsername(request.username()).isPresent()) {
-            throw new RuntimeException("Username exists");
+            throw new RuntimeException("Username already exists");
         }
 
-        User user = new User();
-        user.setUsername(request.username());
-        user.setPassword(passwordEncoder.encode(request.password()));
+        Role role = (request.role() == null) ? Role.ROLE_USER : request.role();
 
-        if (request.role() == null) {
-            user.setRole(Role.ROLE_USER);
-        } else {
-            user.setRole(request.role());
-        }
-        user.setEmail(request.email());
-        user.setName(request.name());
+        User user = User.builder()
+                .username(request.username())
+                .password(passwordEncoder.encode(request.password()))
+                .email(request.email())
+                .name(request.name())
+                .role(role)
+                .build();
 
         userRepo.save(user);
     }

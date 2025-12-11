@@ -1,6 +1,5 @@
 spring:
   datasource:
-    # Các biến này sẽ được docker-compose truyền vào
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}

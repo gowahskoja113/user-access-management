@@ -39,10 +39,7 @@ services:
     container_name: user-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      # --- ĐÃ SỬA DÒNG NÀY ---
-      # Trỏ về 'auth-service' để dùng chung dữ liệu User với Auth Service
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/auth-service
-      # -----------------------
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: Passw0rd
     ports:
@@ -50,6 +47,5 @@ services:
     depends_on:
       - postgres-db
 
-# Đăng ký volume
 volumes:
   postgres_data:

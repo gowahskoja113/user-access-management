@@ -1,6 +1,5 @@
 spring:
   datasource:
-    # DB Local dùng thông tin cũ của bạn
     url: jdbc:postgresql://localhost:5432/user-access-management
     username: postgres
     password: 12345678
