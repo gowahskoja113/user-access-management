@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.r2s.user.UserControllerTest
--------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.020 s -- in com.r2s.user.UserControllerTest
