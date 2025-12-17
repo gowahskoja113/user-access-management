@@ -3,9 +3,11 @@ package com.r2s.user.service;
 import com.r2s.core.entity.User;
 import com.r2s.core.repository.UserRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
+import com.r2s.user.dto.request.UserRequest;
 import com.r2s.user.dto.response.UserResponse;
 import com.r2s.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +19,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
@@ -48,4 +51,20 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         userRepository.delete(user);
     }
+
+    public User createUser (UserRequest request) {
+        if (userRepository.findByUsername(request.username()).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
+        User newUser = User.builder()
+                .username(request.username())
+                .password(passwordEncoder.encode(request.password()))
+                .name(request.fullName())
+                .email(request.email())
+                .role(request.role())
+                .build();
+
+        return userRepository.save(newUser);
+    }
+
 }

@@ -1,15 +1,20 @@
 package com.r2s.user.controller;
 
+import com.r2s.core.entity.User;
 import com.r2s.user.dto.request.UpdateUserRequest;
+import com.r2s.user.dto.request.UserRequest;
 import com.r2s.user.dto.response.UserResponse;
 import com.r2s.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/users")
@@ -41,6 +46,18 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable String username) {
         userService.deleteUser(username);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest request) {
+        User createdUser = userService.createUser(request);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "User created successfully");
+        response.put("data", createdUser);
+
+        return ResponseEntity.ok(response);
     }
 
 }

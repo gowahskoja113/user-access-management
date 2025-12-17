@@ -1,20 +1,20 @@
 package com.r2s.user;
 
-import com.r2s.auth.dto.request.RegisterRequest;
 import com.r2s.core.entity.Role;
 import com.r2s.core.entity.User;
 import com.r2s.core.repository.UserRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
+import com.r2s.user.dto.request.UserRequest;
 import com.r2s.user.dto.response.UserResponse;
 import com.r2s.user.mapper.UserMapper;
 import com.r2s.user.service.UserService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,8 +22,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -33,6 +32,9 @@ public class UserServiceTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -46,11 +48,11 @@ public class UserServiceTest {
         List<User> mockUsers = List.of(user1, user2);
 
         // Mock Repo
-        Mockito.when(userRepository.findAll()).thenReturn(mockUsers);
+        when(userRepository.findAll()).thenReturn(mockUsers);
 
         // Mock Mapper
-        Mockito.when(userMapper.toUserResponse(user1)).thenReturn(new UserResponse(Role.ROLE_USER, "son@gmail.com", null, "son"));
-        Mockito.when(userMapper.toUserResponse(user2)).thenReturn(new UserResponse(Role.ROLE_ADMIN, "admin@gmail.com", null, "admin"));
+        when(userMapper.toUserResponse(user1)).thenReturn(new UserResponse(Role.ROLE_USER, "son@gmail.com", null, "son"));
+        when(userMapper.toUserResponse(user2)).thenReturn(new UserResponse(Role.ROLE_ADMIN, "admin@gmail.com", null, "admin"));
 
         // WHEN
         List<UserResponse> result = userService.getAllUsers();
@@ -61,43 +63,43 @@ public class UserServiceTest {
         assertEquals("admin", result.get(1).username());
 
         verify(userRepository, times(1)).findAll();
-        verify(userMapper, times(2)).toUserResponse(any()); // Verify mapper được gọi 2 lần
+        verify(userMapper, times(2)).toUserResponse(any());
     }
+    @Test
+    void createUser_shouldSaveAndReturnUser() {
+        // 1. GIVEN
+        // Dùng Constructor vì UserRequest là Record
+        UserRequest request = new UserRequest("john", "1234", "John Doe", "john@example.com", Role.ROLE_USER);
 
-//    @Test
-//    void createUser_shouldSaveAndReturnUser() {
-//        // 1. GIVEN (Chuẩn bị dữ liệu)
-//        RegisterRequest request = RegisterRequest.builder()
-//                .username("john")
-//                .password("1234")
-//                .name("John Doe")
-//                .email("john@example.com")
-//                .role(Role.ROLE_USER)
-//                .build();
-//
-//        // Giả lập entity trả về từ DB
-//        User savedUser = User.builder()
-//                .username(request.username())
-//                .password(request.password())
-//                .name(request.name())
-//                .email(request.email())
-//                .role(request.role())
-//                .build();
-//
-//        // Mock: Khi gọi save thì trả về savedUser
-//        Mockito.when(userRepository.save(Mockito.any(User.class))).thenReturn(savedUser);
-//
-//        // 2. WHEN (Gọi hàm createUser của UserService)
-//        User result = userService.createUser(request);
-//
-//        // 3. THEN (Kiểm tra kết quả)
-//        Assertions.assertEquals(savedUser.getUsername(), result.getUsername());
-//        Assertions.assertEquals(savedUser.getEmail(), result.getEmail());
-//        Assertions.assertEquals(savedUser.getRole(), result.getRole());
-//
-//        // Verify repo được gọi 1 lần
-//        Mockito.verify(userRepository, Mockito.times(1)).save(Mockito.any(User.class));
-//    }
+        // Giả lập entity sau khi được save (lưu ý password đã mã hóa)
+        User savedUser = User.builder()
+                .username("john")
+                .password("encoded_1234")
+                .name("John Doe")
+                .email("john@example.com")
+                .role(Role.ROLE_USER)
+                .build();
+
+        // Mock
+        // - Tìm username: Trả về empty (chưa tồn tại) để không bị lỗi Duplicate
+        when(userRepository.findByUsername("john")).thenReturn(Optional.empty());
+        // - Mã hóa password
+        when(passwordEncoder.encode("1234")).thenReturn("encoded_1234");
+        // - Save user
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        // 2. WHEN
+        User result = userService.createUser(request);
+
+        // 3. THEN
+        assertEquals("john", result.getUsername());
+        assertEquals("encoded_1234", result.getPassword()); // Kiểm tra xem pass đã mã hóa chưa
+        assertEquals("John Doe", result.getName());
+
+        verify(userRepository, times(1)).findByUsername("john");
+        verify(passwordEncoder, times(1)).encode("1234");
+        verify(userRepository, times(1)).save(any(User.class));
+    }
 
     // === TEST getUserByUsername ===
     @Test
@@ -105,10 +107,9 @@ public class UserServiceTest {
         User mockUser = User.builder().username("son").email("son@gmail.com").role(Role.ROLE_USER).build();
         UserResponse mockResponse = new UserResponse(Role.ROLE_USER, "son@gmail.com", null, "son");
 
-        Mockito.when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
+        when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
 
-        // FIX QUAN TRỌNG: Mock mapper
-        Mockito.when(userMapper.toUserResponse(mockUser)).thenReturn(mockResponse);
+        when(userMapper.toUserResponse(mockUser)).thenReturn(mockResponse);
 
         UserResponse result = userService.getUserByUsername("son");
 
@@ -120,7 +121,7 @@ public class UserServiceTest {
 
     @Test
     void getUserByUsername_shouldThrowExceptionIfNotFound() {
-        Mockito.when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> {
             userService.getUserByUsername("unknown");
@@ -136,9 +137,9 @@ public class UserServiceTest {
         UpdateUserRequest update = UpdateUserRequest.builder().name("new son's name").email("newson@gmail.com").build();
         UserResponse expectedResponse = new UserResponse(Role.ROLE_USER, "newson@gmail.com", "new son's name", "son");
 
-        Mockito.when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
-        Mockito.when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-        Mockito.when(userMapper.toUserResponse(any(User.class))).thenReturn(expectedResponse);
+        when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+        when(userMapper.toUserResponse(any(User.class))).thenReturn(expectedResponse);
 
         UserResponse result = userService.updateUser("son", update);
 
@@ -154,7 +155,7 @@ public class UserServiceTest {
     @Test
     void deleteUser_shouldDeleteIfExists() {
         User mockUser = User.builder().username("son").build();
-        Mockito.when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
+        when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
 
         userService.deleteUser("son");
 
@@ -164,7 +165,7 @@ public class UserServiceTest {
 
     @Test
     void deleteUser_shouldThrowExceptionIfNotFound() {
-        Mockito.when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> userService.deleteUser("unknown"));
         verify(userRepository, times(1)).findByUsername("unknown");
         verify(userRepository, Mockito.never()).delete(any());
@@ -173,7 +174,7 @@ public class UserServiceTest {
     @Test
     void deleteUser_shouldThrowIfDeleteFails() {
         User mockUser = User.builder().username("son").build();
-        Mockito.when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
+        when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
         Mockito.doThrow(new RuntimeException("DB error")).when(userRepository).delete(mockUser);
 
         assertThrows(RuntimeException.class, () -> userService.deleteUser("son"));

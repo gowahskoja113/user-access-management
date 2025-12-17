@@ -4,5 +4,6 @@ F:\R2S\user-access-management\user-service\src\main\java\com\r2s\user\mapper\Use
 F:\R2S\user-access-management\user-service\src\main\java\com\r2s\user\service\UserService.java
 F:\R2S\user-access-management\user-service\src\main\java\com\r2s\user\controller\UserController.java
 F:\R2S\user-access-management\user-service\src\main\java\com\r2s\user\config\SecurityConfig.java
+F:\R2S\user-access-management\user-service\src\main\java\com\r2s\user\dto\request\UserRequest.java
 F:\R2S\user-access-management\user-service\src\main\java\com\r2s\user\dto\request\UpdateUserRequest.java
 F:\R2S\user-access-management\user-service\src\main\java\com\r2s\user\controller\HelloController.java

@@ -6,12 +6,12 @@
     <parent>
         <groupId>com.r2s</groupId>
         <artifactId>user-access-management</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
 
     <groupId>com.r2s.core</groupId>
     <artifactId>core</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
     <name>core</name>
 
     <dependencies>

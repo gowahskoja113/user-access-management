@@ -1,4 +1,5 @@
 com\r2s\user\service\UserService.class
+com\r2s\user\dto\request\UpdateUserRequest$UpdateUserRequestBuilder.class
 com\r2s\user\UserServiceApplication.class
 com\r2s\user\controller\UserController.class
 com\r2s\user\dto\request\UpdateUserRequest.class
@@ -6,3 +7,4 @@ com\r2s\user\dto\response\UserResponse.class
 com\r2s\user\config\SecurityConfig.class
 com\r2s\user\controller\HelloController.class
 com\r2s\user\mapper\UserMapper.class
+com\r2s\user\dto\request\UserRequest.class
