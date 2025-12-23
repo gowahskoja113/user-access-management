@@ -44,7 +44,7 @@ class UserControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // === GET /api/users === (ADMIN only)
+// === GET /api/users === (ADMIN only)
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void getAllUsers_shouldReturnListOfUsers() throws Exception {
@@ -58,16 +58,16 @@ class UserControllerTest {
         ResultActions response = mockMvc.perform(get("/api/users"));
 
         response.andExpect(status().isOk())
-                // FIX: Controller trả về List trực tiếp, nên root là "$", không có "message" hay "data"
+// controller tra ve list luon nen khong co object de check message
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].username").value("admin"));
 
         verify(userService).getAllUsers();
     }
 
-    // === POST /api/users/create === (ADMIN only)
+// === POST /api/users/create === (ADMIN only)
     @Test
-    @WithMockUser(roles = {"ADMIN"}) // FIX: Thêm quyền ADMIN để không bị 403
+    @WithMockUser(roles = {"ADMIN"})
     void createUser_shouldReturnCreatedUser() throws Exception {
         UserRequest request = new UserRequest("john", "1234",
                 "John Doe", "john@gmail.com", Role.ROLE_USER);
@@ -95,7 +95,7 @@ class UserControllerTest {
         verify(userService).createUser(any(UserRequest.class));
     }
 
-    // === GET /api/users/me ===
+// === GET /api/users/me ===
     @Test
     @WithMockUser(username = "john", roles = {"USER"})
     void getMyProfile_shouldReturnUserProfile() throws Exception {
@@ -111,7 +111,7 @@ class UserControllerTest {
         verify(userService).getUserByUsername("john");
     }
 
-    // === PUT /api/users/me ===
+// === PUT /api/users/me ===
     @Test
     @WithMockUser(username = "john", roles = {"USER"})
     void updateMyProfile_shouldUpdateUser() throws Exception {
@@ -134,7 +134,7 @@ class UserControllerTest {
         verify(userService).updateUser(eq("john"), any(UpdateUserRequest.class));
     }
 
-    // === DELETE /api/users/{username} === (ADMIN only)
+// === DELETE /api/users/{username} === (ADMIN only)
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void deleteUser_shouldReturnNoContent() throws Exception {

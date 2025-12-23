@@ -65,13 +65,11 @@ public class UserServiceTest {
         verify(userRepository, times(1)).findAll();
         verify(userMapper, times(2)).toUserResponse(any());
     }
+
     @Test
     void createUser_shouldSaveAndReturnUser() {
-        // 1. GIVEN
-        // Dùng Constructor vì UserRequest là Record
         UserRequest request = new UserRequest("john", "1234", "John Doe", "john@example.com", Role.ROLE_USER);
 
-        // Giả lập entity sau khi được save (lưu ý password đã mã hóa)
         User savedUser = User.builder()
                 .username("john")
                 .password("encoded_1234")
@@ -81,19 +79,16 @@ public class UserServiceTest {
                 .build();
 
         // Mock
-        // - Tìm username: Trả về empty (chưa tồn tại) để không bị lỗi Duplicate
         when(userRepository.findByUsername("john")).thenReturn(Optional.empty());
-        // - Mã hóa password
+
         when(passwordEncoder.encode("1234")).thenReturn("encoded_1234");
-        // - Save user
+
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        // 2. WHEN
         User result = userService.createUser(request);
 
-        // 3. THEN
         assertEquals("john", result.getUsername());
-        assertEquals("encoded_1234", result.getPassword()); // Kiểm tra xem pass đã mã hóa chưa
+        assertEquals("encoded_1234", result.getPassword());
         assertEquals("John Doe", result.getName());
 
         verify(userRepository, times(1)).findByUsername("john");

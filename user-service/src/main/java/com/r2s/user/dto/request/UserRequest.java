@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-// Dùng Record để tự động có constructor và getter (dạng .username(), .password()...)
+
 public record UserRequest(
 
         @NotBlank(message = "Username không được để trống")
@@ -14,8 +14,6 @@ public record UserRequest(
         @NotBlank(message = "Password không được để trống")
         String password,
 
-        // Trong Test bạn dùng "John Doe" ở vị trí thứ 3 -> tương ứng fullName
-        // Trong Service sẽ map field này vào entity.setName()
         @NotBlank(message = "Full name không được để trống")
         String fullName,
 

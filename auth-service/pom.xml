@@ -15,6 +15,7 @@
     <name>auth-service</name>
 
     <dependencies>
+
         <dependency>
             <groupId>com.r2s.core</groupId>
             <artifactId>core</artifactId>
@@ -52,6 +53,18 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
 

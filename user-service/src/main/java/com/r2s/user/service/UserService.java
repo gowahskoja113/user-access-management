@@ -7,8 +7,11 @@ import com.r2s.user.dto.request.UserRequest;
 import com.r2s.user.dto.response.UserResponse;
 import com.r2s.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,10 +55,12 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public User createUser (UserRequest request) {
+    public User createUser(UserRequest request) {
+        // Đoạn check cũ này cứ giữ nguyên (hoặc bỏ cũng được)
         if (userRepository.findByUsername(request.username()).isPresent()) {
-            throw new RuntimeException("Username already exists");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
         }
+
         User newUser = User.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
@@ -64,7 +69,12 @@ public class UserService {
                 .role(request.role())
                 .build();
 
-        return userRepository.save(newUser);
+        // --- THÊM ĐOẠN TRY-CATCH NÀY VÀO ---
+        try {
+            return userRepository.save(newUser);
+        } catch (DataIntegrityViolationException e) {
+            // Nếu DB báo lỗi trùng (do unique constraint), ta ném ra 400
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username or Email already exists");
+        }
     }
-
 }
