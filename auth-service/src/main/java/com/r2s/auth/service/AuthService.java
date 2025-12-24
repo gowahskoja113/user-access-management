@@ -7,6 +7,7 @@ import com.r2s.auth.dto.request.RegisterRequest;
 import com.r2s.core.entity.Role;
 
 import com.r2s.core.entity.User;
+import com.r2s.core.exception.CustomException;
 import com.r2s.core.repository.UserRepository;
 import com.r2s.core.security.JwtUtil;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,7 +32,7 @@ public class AuthService {
     @Transactional
     public void register(RegisterRequest request) {
         if (userRepo.findByUsername(request.username()).isPresent()) {
-            throw new RuntimeException("Username already exists");
+            throw new CustomException("Username already exists");
         }
 
         Role role = (request.role() == null) ? Role.ROLE_USER : request.role();

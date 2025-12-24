@@ -67,7 +67,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void createUser_shouldSaveAndReturnUser() {
+    void createUser_shouldSaveAndReturnUser_whenUsernameNotExists() {
         UserRequest request = new UserRequest("john", "1234", "John Doe", "john@example.com", Role.ROLE_USER);
 
         User savedUser = User.builder()
@@ -98,7 +98,7 @@ public class UserServiceTest {
 
     // === TEST getUserByUsername ===
     @Test
-    void getUserByUsername_shouldReturnUserResponse() {
+    void getUserByUsername_shouldReturnUserResponse_whenUserExists() {
         User mockUser = User.builder().username("son").email("son@gmail.com").role(Role.ROLE_USER).build();
         UserResponse mockResponse = new UserResponse(Role.ROLE_USER, "son@gmail.com", null, "son");
 
@@ -115,7 +115,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void getUserByUsername_shouldThrowExceptionIfNotFound() {
+    void getUserByUsername_shouldThrowException_whenUserNotFound() {
         when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> {
@@ -127,7 +127,7 @@ public class UserServiceTest {
 
     // === TEST updateUser ===
     @Test
-    void updateUser_shouldUpdateAndReturnUserResponse() {
+    void updateUser_shouldUpdateAndReturnUserResponse_whenUserExists() {
         User mockUser = User.builder().username("son").email("son@gmail.com").name("old name").role(Role.ROLE_USER).build();
         UpdateUserRequest update = UpdateUserRequest.builder().name("new son's name").email("newson@gmail.com").build();
         UserResponse expectedResponse = new UserResponse(Role.ROLE_USER, "newson@gmail.com", "new son's name", "son");
@@ -148,7 +148,7 @@ public class UserServiceTest {
 
     // === TEST deleteUser ===
     @Test
-    void deleteUser_shouldDeleteIfExists() {
+    void deleteUser_shouldDeleteUser_whenUserExists() {
         User mockUser = User.builder().username("son").build();
         when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
 
@@ -159,7 +159,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void deleteUser_shouldThrowExceptionIfNotFound() {
+    void deleteUser_shouldThrowException_whenUserNotFound() {
         when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> userService.deleteUser("unknown"));
         verify(userRepository, times(1)).findByUsername("unknown");
@@ -167,7 +167,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void deleteUser_shouldThrowIfDeleteFails() {
+    void deleteUser_shouldThrowException_whenRepositoryDeleteFails() {
         User mockUser = User.builder().username("son").build();
         when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
         Mockito.doThrow(new RuntimeException("DB error")).when(userRepository).delete(mockUser);

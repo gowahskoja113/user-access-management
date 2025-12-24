@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -103,7 +104,7 @@ class UserIntegrationTest {
     @Test
     @WithMockUser(username = "myuser", roles = "USER")
     void getMyProfile_shouldReturnCorrectInfo() throws Exception {
-        // GIVEN: Phải lưu thằng "myuser" vào DB thật trước thì mới tìm thấy
+        // GIVEN
         User me = User.builder()
                 .username("myuser")
                 .password("pass")
