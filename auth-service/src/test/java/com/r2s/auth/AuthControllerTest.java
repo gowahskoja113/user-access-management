@@ -21,7 +21,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;

@@ -17,12 +17,11 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
-    // xử lý lỗi đăng nhập (401 Unauthorized)
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<String> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
-                .body(ex.getMessage());
+                .body("Invalid username or password");
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
@@ -32,6 +31,7 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
+    // luôn để handler này CUỐI CÙNG
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleAll(Exception ex) {
         return ResponseEntity
