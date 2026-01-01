@@ -31,7 +31,6 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
-    // luôn để handler này CUỐI CÙNG
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleAll(Exception ex) {
         return ResponseEntity

@@ -5,7 +5,6 @@ import com.r2s.auth.dto.request.LoginRequest;
 import com.r2s.auth.dto.request.RegisterRequest;
 import com.r2s.core.entity.Role;
 import com.r2s.core.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,12 +12,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,7 +30,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-class AuthIntegrationTest {
+//@Testcontainers
+class AuthIntegrationTest{
+
+//    @Container
+//    static PostgreSQLContainer<?> postgres =
+//            new PostgreSQLContainer<>("postgres:15-alpine")
+//                    .withDatabaseName("auth_test")
+//                    .withUsername("test")
+//                    .withPassword("test");
+//
+//    @DynamicPropertySource
+//    static void configureProperties(DynamicPropertyRegistry registry) {
+//        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+//        registry.add("spring.datasource.username", postgres::getUsername);
+//        registry.add("spring.datasource.password", postgres::getPassword);
+//
+//        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+//    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -37,13 +57,6 @@ class AuthIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @BeforeEach
-    void setUp() {
-        if (userRepository.count() > 0) {
-            userRepository.deleteAll();
-        }
-    }
 
     // 1. register_returns400_whenDuplicateUsername
     @Test
@@ -57,13 +70,12 @@ class AuthIntegrationTest {
                 .role(Role.ROLE_USER)
                 .build();
 
-        // Lần 1: Thành công
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk());
 
-        // Lần 2: Trùng Username -> Mong đợi 400 (Bad Request)
+        // dang ki lan 2 trung username => 400
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))

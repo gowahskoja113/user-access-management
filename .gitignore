@@ -1,4 +1,5 @@
 # Chặn tất cả thư mục target ở mọi ngóc ngách
+.m2-temp/
 **/target/
 target/
 

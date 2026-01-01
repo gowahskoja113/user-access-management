@@ -1,6 +1,7 @@
 package com.r2s.user.service;
 
 import com.r2s.core.entity.User;
+import com.r2s.core.exception.CustomException;
 import com.r2s.core.repository.UserRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
@@ -56,9 +57,9 @@ public class UserService {
     }
 
     public User createUser(UserRequest request) {
-        // Đoạn check cũ này cứ giữ nguyên (hoặc bỏ cũng được)
+
         if (userRepository.findByUsername(request.username()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+            throw new CustomException("Username already exists");
         }
 
         User newUser = User.builder()
@@ -69,12 +70,10 @@ public class UserService {
                 .role(request.role())
                 .build();
 
-        // --- THÊM ĐOẠN TRY-CATCH NÀY VÀO ---
         try {
             return userRepository.save(newUser);
         } catch (DataIntegrityViolationException e) {
-            // Nếu DB báo lỗi trùng (do unique constraint), ta ném ra 400
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username or Email already exists");
+            throw new CustomException("Username or Email already exists");
         }
     }
 }

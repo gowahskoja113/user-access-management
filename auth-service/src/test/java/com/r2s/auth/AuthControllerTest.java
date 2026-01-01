@@ -117,6 +117,7 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Invalid password"));
+                .andExpect(content().string("Invalid username or password"));
     }
+
 }

@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@ActiveProfiles("test")
 class UserIntegrationTest {
 
     @Autowired
@@ -42,9 +44,9 @@ class UserIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void createUser_shouldSaveToH2_andReturnSuccess() throws Exception {
+    void createUser_shouldSaveToDb_andReturnSuccess() throws Exception {
         // GIVEN
-        UserRequest request = new UserRequest("h2_user", "123456", "H2 User", "h2@gmail.com", Role.ROLE_USER);
+        UserRequest request = new UserRequest("new_user", "123456", "New User", "new@gmail.com", Role.ROLE_USER);
 
         // WHEN
         mockMvc.perform(post("/api/users/create")
@@ -53,41 +55,41 @@ class UserIntegrationTest {
 
                 // THEN (Check API trả về)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.username").value("h2_user"));
+                .andExpect(jsonPath("$.data.username").value("new_user"));
 
-        // THEN (Check Database H2 - Logic Integration y hệt DB thật)
-        User savedUser = userRepository.findByUsername("h2_user").orElseThrow();
-        assert savedUser.getEmail().equals("h2@gmail.com");
+        // THEN (Check Database - Logic Integration y hệt DB thật)
+        User savedUser = userRepository.findByUsername("new_user").orElseThrow();
+        assert savedUser.getEmail().equals("new@gmail.com");
     }
 
-//    @Test
-//    @WithMockUser(roles = "ADMIN")
-//    void createUser_shouldReturn400_whenUsernameExists() throws Exception {
-//        // GIVEN: Lưu trước 1 thằng vào H2
-//        User existingUser = User.builder()
-//                .username("duplicate")
-//                .password(passwordEncoder.encode("1234"))
-//                .email("exist@gmail.com")
-//                .name("Người Dùng Mẫu")
-//                .role(Role.ROLE_USER)
-//                .build();
-//
-//        userRepository.save(existingUser);
-//
-//        // WHEN: Tạo trùng tên
-//        UserRequest request = new UserRequest("duplicate", "123456", "Any Name", "any@gmail.com", Role.ROLE_USER);
-//
-//        // THEN
-//        mockMvc.perform(post("/api/users/create")
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .content(objectMapper.writeValueAsString(request)))
-//                .andExpect(status().isBadRequest());
-//    }
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createUser_shouldReturn400_whenUsernameExists() throws Exception {
+        // GIVEN: Lưu trước 1 user vào DB
+        User existingUser = User.builder()
+                .username("duplicate")
+                .password(passwordEncoder.encode("1234"))
+                .email("exist@gmail.com")
+                .name("Người Dùng Mẫu")
+                .role(Role.ROLE_USER)
+                .build();
+
+        userRepository.save(existingUser);
+
+        // WHEN: Tạo trùng tên
+        UserRequest request = new UserRequest("duplicate", "123456", "Any Name", "any@gmail.com", Role.ROLE_USER);
+
+        // THEN
+        mockMvc.perform(post("/api/users/create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void getAllUsers_shouldReturnList() throws Exception {
-        //don db truoc khi test
+        // dọn db trước khi test
         userRepository.deleteAll();
 
         // GIVEN: Seed 2 users vào DB
@@ -168,9 +170,9 @@ class UserIntegrationTest {
 
         // WHEN
         mockMvc.perform(delete("/api/users/todelete"))
-                .andExpect(status().isNoContent()); // Hoặc isOk() tuỳ Controller của bạn trả về 204 hay 200
+                .andExpect(status().isNoContent());
 
-        // THEN: Tìm trong DB phải không thấy nữa
+        // THEN: Tìm trong DB
         assertFalse(userRepository.findByUsername("todelete").isPresent());
     }
 }
