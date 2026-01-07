@@ -37,13 +37,12 @@ public class AuthService {
 
         Role role = (request.role() == null) ? Role.ROLE_USER : request.role();
 
-        User user = User.builder()
-                .username(request.username())
-                .password(passwordEncoder.encode(request.password()))
-                .email(request.email())
-                .name(request.name())
-                .role(role)
-                .build();
+        User user = new User();
+        user.setUsername(request.username());
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setEmail(request.email());
+        user.setName(request.name());
+        user.setRole(role);
 
         userRepo.save(user);
     }

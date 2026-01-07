@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-class UserIntegrationTest {
+class UserIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -66,13 +66,12 @@ class UserIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void createUser_shouldReturn400_whenUsernameExists() throws Exception {
         // GIVEN: Lưu trước 1 user vào DB
-        User existingUser = User.builder()
-                .username("duplicate")
-                .password(passwordEncoder.encode("1234"))
-                .email("exist@gmail.com")
-                .name("Người Dùng Mẫu")
-                .role(Role.ROLE_USER)
-                .build();
+        User existingUser = new User();
+        existingUser.setUsername("duplicate");
+        existingUser.setPassword(passwordEncoder.encode("1234"));
+        existingUser.setEmail("exist@gmail.com");
+        existingUser.setName("Người Dùng Mẫu");
+        existingUser.setRole(Role.ROLE_USER);
 
         userRepository.save(existingUser);
 
@@ -93,8 +92,21 @@ class UserIntegrationTest {
         userRepository.deleteAll();
 
         // GIVEN: Seed 2 users vào DB
-        userRepository.save(User.builder().username("u1").password("p").name("n1").email("e1").role(Role.ROLE_USER).build());
-        userRepository.save(User.builder().username("u2").password("p").name("n2").email("e2").role(Role.ROLE_USER).build());
+        User user1 = new User();
+        user1.setUsername("u1");
+        user1.setPassword("p");
+        user1.setName("n1");
+        user1.setEmail("e1");
+        user1.setRole(Role.ROLE_USER);
+        userRepository.save(user1);
+
+        User user2 = new User();
+        user2.setUsername("u2");
+        user2.setPassword("p");
+        user2.setName("n2");
+        user2.setEmail("e2");
+        user2.setRole(Role.ROLE_USER);
+        userRepository.save(user2);
 
         // WHEN & THEN
         mockMvc.perform(get("/api/users"))
@@ -107,13 +119,12 @@ class UserIntegrationTest {
     @WithMockUser(username = "myuser", roles = "USER")
     void getMyProfile_shouldReturnCorrectInfo() throws Exception {
         // GIVEN
-        User me = User.builder()
-                .username("myuser")
-                .password("pass")
-                .name("My Name")
-                .email("my@gmail.com")
-                .role(Role.ROLE_USER)
-                .build();
+        User me = new User();
+        me.setUsername("myuser");
+        me.setPassword("pass");
+        me.setName("My Name");
+        me.setEmail("my@gmail.com");
+        me.setRole(Role.ROLE_USER);
         userRepository.save(me);
 
         // WHEN & THEN
@@ -127,19 +138,15 @@ class UserIntegrationTest {
     @WithMockUser(username = "update_user", roles = "USER")
     void updateMyProfile_shouldChangeDataInDB() throws Exception {
         // GIVEN
-        User original = User.builder()
-                .username("update_user")
-                .password("pass")
-                .name("Old N    ame")
-                .email("old@gmail.com")
-                .role(Role.ROLE_USER)
-                .build();
+        User original = new User();
+        original.setUsername("update_user");
+        original.setPassword("pass");
+        original.setName("Old Name");
+        original.setEmail("old@gmail.com");
+        original.setRole(Role.ROLE_USER);
         userRepository.save(original);
 
-        UpdateUserRequest updateRequest = UpdateUserRequest.builder()
-                .name("New Name")
-                .email("new@gmail.com")
-                .build();
+        UpdateUserRequest updateRequest = new UpdateUserRequest("new@gmail.com", "New Name");
 
         // WHEN
         mockMvc.perform(put("/api/users/me")
@@ -159,13 +166,12 @@ class UserIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void deleteUser_shouldRemoveFromDB() throws Exception {
         // GIVEN
-        User toDelete = User.builder()
-                .username("todelete")
-                .password("pass")
-                .name("Del")
-                .email("del@gmail.com")
-                .role(Role.ROLE_USER)
-                .build();
+        User toDelete = new User();
+        toDelete.setUsername("todelete");
+        toDelete.setPassword("pass");
+        toDelete.setName("Del");
+        toDelete.setEmail("del@gmail.com");
+        toDelete.setRole(Role.ROLE_USER);
         userRepository.save(toDelete);
 
         // WHEN

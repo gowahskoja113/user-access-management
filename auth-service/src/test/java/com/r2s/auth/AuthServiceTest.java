@@ -40,13 +40,7 @@ class AuthServiceTest {
     @Test
     void register_returnsResponse_whenUsernameAvailable_withGivenRoleAdmin() {
         // Arrange
-        RegisterRequest request = RegisterRequest.builder()
-                .username("admin")
-                .password("pass")
-                .email("admin@test.com")
-                .name("Admin")
-                .role(Role.ROLE_ADMIN)
-                .build();
+        RegisterRequest request = new RegisterRequest("admin", "pass", "admin@test.com", "Admin", Role.ROLE_ADMIN);
 
         when(userRepo.findByUsername("admin")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("pass")).thenReturn("encodedPass");
@@ -91,7 +85,9 @@ class AuthServiceTest {
     @Test
     void login_throws_whenPasswordWrong() {
         LoginRequest request = new LoginRequest("user", "wrongpass");
-        User user = User.builder().username("user").password("encodedRealPass").build();
+        User user = new User();
+        user.setUsername("user");
+        user.setPassword("encodedRealPass");
 
         when(userRepo.findByUsername("user")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongpass", "encodedRealPass")).thenReturn(false);
@@ -102,8 +98,7 @@ class AuthServiceTest {
     // 5. register_throws_whenUsernameExists
     @Test
     void register_throws_whenUsernameExists() {
-        RegisterRequest request = RegisterRequest.builder()
-                .username("exist").password("pass").email("mail").name("name").role(null).build();
+        RegisterRequest request = new RegisterRequest("exist", "pass", "mail", "name", null);
 
         when(userRepo.findByUsername("exist")).thenReturn(Optional.of(new User()));
 
@@ -114,7 +109,9 @@ class AuthServiceTest {
     @Test
     void login_returnToken_whenCredentialsValid() {
         LoginRequest request = new LoginRequest("user", "pass");
-        User user = User.builder().username("user").password("encodedPass").build();
+        User user = new User();
+        user.setUsername("user");
+        user.setPassword("encodedPass");
 
         when(userRepo.findByUsername("user")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("pass", "encodedPass")).thenReturn(true);

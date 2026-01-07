@@ -62,13 +62,7 @@ class AuthIntegrationTest{
     @Test
     void register_returns400_whenDuplicateUsername() throws Exception {
 
-        RegisterRequest req = RegisterRequest.builder()
-                .username("dupUser")
-                .password("123")
-                .email("dup@test.com")
-                .name("Duplicate")
-                .role(Role.ROLE_USER)
-                .build();
+        RegisterRequest req = new RegisterRequest("dupUser", "123", "dup@test.com", "Duplicate", Role.ROLE_USER);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

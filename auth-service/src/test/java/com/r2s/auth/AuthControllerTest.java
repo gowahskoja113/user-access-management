@@ -51,13 +51,7 @@ class AuthControllerTest {
     // 1. register_callsServiceWithExactPayload_whenBodyValid
     @Test
     void register_callsServiceWithExactPayload_whenBodyValid() throws Exception {
-        RegisterRequest request = RegisterRequest.builder()
-                .username("user")
-                .password("123")
-                .email("a@a.com")
-                .name("Name")
-                .role(Role.ROLE_USER)
-                .build();
+        RegisterRequest request = new RegisterRequest("user", "123", "a@a.com", "Name", Role.ROLE_USER);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -8,6 +8,7 @@ import com.r2s.user.dto.request.UserRequest;
 import com.r2s.user.dto.response.UserResponse;
 import com.r2s.user.mapper.UserMapper;
 import com.r2s.user.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,29 +31,44 @@ public class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private UserMapper userMapper;
+    private UserMapper userMapper = new UserMapper();
 
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @InjectMocks
     private UserService userService;
+
+    @BeforeEach
+    void setUp() {
+        userService = new UserService();
+        userService.setUserRepository(userRepository);
+        userService.setUserMapper(userMapper);
+        userService.setPasswordEncoder(passwordEncoder);
+    }
 
     // === TEST getAllUsers ===
     @Test
     void getAllUsers_shouldReturnListOfUserResponses() {
         // GIVEN
-        User user1 = User.builder().username("son").email("son@gmail.com").role(Role.ROLE_USER).build();
-        User user2 = User.builder().username("admin").email("admin@gmail.com").role(Role.ROLE_ADMIN).build();
+        User user1 = new User();
+        user1.setUsername("son");
+        user1.setEmail("son@gmail.com");
+        user1.setRole(Role.ROLE_USER);
+
+        User user2 = new User();
+        user2.setUsername("admin");
+        user2.setEmail("admin@gmail.com");
+        user2.setRole(Role.ROLE_ADMIN);
         List<User> mockUsers = List.of(user1, user2);
 
         // Mock Repo
         when(userRepository.findAll()).thenReturn(mockUsers);
 
-        // Mock Mapper
-        when(userMapper.toUserResponse(user1)).thenReturn(new UserResponse(Role.ROLE_USER, "son@gmail.com", null, "son"));
-        when(userMapper.toUserResponse(user2)).thenReturn(new UserResponse(Role.ROLE_ADMIN, "admin@gmail.com", null, "admin"));
+        // Expected results (UserMapper logic is simple, so we can create expected responses directly)
+        List<UserResponse> expected = List.of(
+            new UserResponse(Role.ROLE_USER, "son@gmail.com", null, "son"),
+            new UserResponse(Role.ROLE_ADMIN, "admin@gmail.com", null, "admin")
+        );
 
         // WHEN
         List<UserResponse> result = userService.getAllUsers();
@@ -63,20 +79,18 @@ public class UserServiceTest {
         assertEquals("admin", result.get(1).username());
 
         verify(userRepository, times(1)).findAll();
-        verify(userMapper, times(2)).toUserResponse(any());
     }
 
     @Test
     void createUser_shouldSaveAndReturnUser_whenUsernameNotExists() {
         UserRequest request = new UserRequest("john", "1234", "John Doe", "john@example.com", Role.ROLE_USER);
 
-        User savedUser = User.builder()
-                .username("john")
-                .password("encoded_1234")
-                .name("John Doe")
-                .email("john@example.com")
-                .role(Role.ROLE_USER)
-                .build();
+        User savedUser = new User();
+        savedUser.setUsername("john");
+        savedUser.setPassword("encoded_1234");
+        savedUser.setName("John Doe");
+        savedUser.setEmail("john@example.com");
+        savedUser.setRole(Role.ROLE_USER);
 
         // Mock
         when(userRepository.findByUsername("john")).thenReturn(Optional.empty());
@@ -99,19 +113,21 @@ public class UserServiceTest {
     // === TEST getUserByUsername ===
     @Test
     void getUserByUsername_shouldReturnUserResponse_whenUserExists() {
-        User mockUser = User.builder().username("son").email("son@gmail.com").role(Role.ROLE_USER).build();
+        User mockUser = new User();
+        mockUser.setUsername("son");
+        mockUser.setEmail("son@gmail.com");
+        mockUser.setRole(Role.ROLE_USER);
         UserResponse mockResponse = new UserResponse(Role.ROLE_USER, "son@gmail.com", null, "son");
 
         when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
 
-        when(userMapper.toUserResponse(mockUser)).thenReturn(mockResponse);
+        // userMapper is now a real instance, so toUserResponse will be called directly
 
         UserResponse result = userService.getUserByUsername("son");
 
         assertEquals("son", result.username());
 
         verify(userRepository, times(1)).findByUsername("son");
-        verify(userMapper, times(1)).toUserResponse(mockUser);
     }
 
     @Test
@@ -128,13 +144,18 @@ public class UserServiceTest {
     // === TEST updateUser ===
     @Test
     void updateUser_shouldUpdateAndReturnUserResponse_whenUserExists() {
-        User mockUser = User.builder().username("son").email("son@gmail.com").name("old name").role(Role.ROLE_USER).build();
-        UpdateUserRequest update = UpdateUserRequest.builder().name("new son's name").email("newson@gmail.com").build();
+        User mockUser = new User();
+        mockUser.setUsername("son");
+        mockUser.setEmail("son@gmail.com");
+        mockUser.setName("old name");
+        mockUser.setRole(Role.ROLE_USER);
+        UpdateUserRequest update = new UpdateUserRequest("newson@gmail.com", "new son's name");
         UserResponse expectedResponse = new UserResponse(Role.ROLE_USER, "newson@gmail.com", "new son's name", "son");
 
         when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-        when(userMapper.toUserResponse(any(User.class))).thenReturn(expectedResponse);
+
+        // The real UserMapper will be used, so the expected response should match what it produces
 
         UserResponse result = userService.updateUser("son", update);
 
@@ -143,13 +164,13 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).findByUsername("son");
         verify(userRepository, times(1)).save(mockUser);
-        verify(userMapper, times(1)).toUserResponse(any(User.class));
     }
 
     // === TEST deleteUser ===
     @Test
     void deleteUser_shouldDeleteUser_whenUserExists() {
-        User mockUser = User.builder().username("son").build();
+        User mockUser = new User();
+        mockUser.setUsername("son");
         when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
 
         userService.deleteUser("son");
@@ -168,7 +189,8 @@ public class UserServiceTest {
 
     @Test
     void deleteUser_shouldThrowException_whenRepositoryDeleteFails() {
-        User mockUser = User.builder().username("son").build();
+        User mockUser = new User();
+        mockUser.setUsername("son");
         when(userRepository.findByUsername("son")).thenReturn(Optional.of(mockUser));
         Mockito.doThrow(new RuntimeException("DB error")).when(userRepository).delete(mockUser);
 

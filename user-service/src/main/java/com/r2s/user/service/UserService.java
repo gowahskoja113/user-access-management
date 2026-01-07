@@ -7,7 +7,7 @@ import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
 import com.r2s.user.dto.response.UserResponse;
 import com.r2s.user.mapper.UserMapper;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,12 +18,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
@@ -62,18 +66,30 @@ public class UserService {
             throw new CustomException("Username already exists");
         }
 
-        User newUser = User.builder()
-                .username(request.username())
-                .password(passwordEncoder.encode(request.password()))
-                .name(request.fullName())
-                .email(request.email())
-                .role(request.role())
-                .build();
+        User newUser = new User();
+        newUser.setUsername(request.username());
+        newUser.setPassword(passwordEncoder.encode(request.password()));
+        newUser.setName(request.fullName());
+        newUser.setEmail(request.email());
+        newUser.setRole(request.role());
 
         try {
             return userRepository.save(newUser);
         } catch (DataIntegrityViolationException e) {
             throw new CustomException("Username or Email already exists");
         }
+    }
+
+    // Setters for testing
+    public void setUserRepository(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    public void setUserMapper(UserMapper userMapper) {
+        this.userMapper = userMapper;
+    }
+
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 }
