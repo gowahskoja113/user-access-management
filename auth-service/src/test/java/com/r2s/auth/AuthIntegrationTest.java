@@ -12,14 +12,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,24 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-//@Testcontainers
-class AuthIntegrationTest{
-
-//    @Container
-//    static PostgreSQLContainer<?> postgres =
-//            new PostgreSQLContainer<>("postgres:15-alpine")
-//                    .withDatabaseName("auth_test")
-//                    .withUsername("test")
-//                    .withPassword("test");
-//
-//    @DynamicPropertySource
-//    static void configureProperties(DynamicPropertyRegistry registry) {
-//        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-//        registry.add("spring.datasource.username", postgres::getUsername);
-//        registry.add("spring.datasource.password", postgres::getPassword);
-//
-//        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-//    }
+class AuthIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -116,7 +94,7 @@ class AuthIntegrationTest{
                 .andExpect(jsonPath("$.token").exists())
                 .andReturn();
 
-        // 3. Verify token format (JWT có 3 phần)
+        // 3. Verify token format
         String token = objectMapper
                 .readTree(result.getResponse().getContentAsString())
                 .get("token")
@@ -124,7 +102,6 @@ class AuthIntegrationTest{
 
         assertThat(token.split("\\.").length).isEqualTo(3);
     }
-
 
     // 4. register_returns200_andPersistUser_whenValid
     @Test

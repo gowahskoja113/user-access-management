@@ -1,0 +1,659 @@
+{
+	"info": {
+		"_postman_id": "907ecb41-5166-409d-8fc5-ec0b2eda00e9",
+		"name": "User Access Management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "46042410"
+	},
+	"item": [
+		{
+			"name": "User Service",
+			"item": [
+				{
+					"name": "User",
+					"item": [
+						{
+							"name": "Get All User",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Lấy danh sách user thành công (200)\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"var jsonData = pm.response.json();\r",
+											"\r",
+											"pm.test(\"Response trả về là danh sách\", function () {\r",
+											"    pm.expect(jsonData).to.be.an('array');\r",
+											"    \r",
+											"});\r",
+											"\r",
+											"var currentUsername = pm.environment.get(\"username\");\r",
+											"var userFound = jsonData.find(x => x.username === currentUsername);\r",
+											"\r",
+											"pm.test(\"Tìm thấy user vừa tạo trong danh sách\", function () {\r",
+											"    pm.expect(userFound).to.not.be.undefined;\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{hostname}}:{{user_port}}/api/users",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{user_port}}",
+									"path": [
+										"api",
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get My Profile",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// 1. Check status 200\r",
+											"pm.test(\"Lấy profile thành công (200)\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"// 2. Parse dữ liệu trả về\r",
+											"var jsonData = pm.response.json();\r",
+											"\r",
+											"// Lấy dữ liệu mong đợi từ biến môi trường (đã set lúc đăng ký/login)\r",
+											"var expectedUsername = pm.environment.get(\"username\");\r",
+											"var expectedEmail = pm.environment.get(\"email\");\r",
+											"\r",
+											"// 3. Validate dữ liệu logic (Theo code Java: findByUsername phải trả về đúng user đó)\r",
+											"pm.test(\"Username trả về chính xác\", function () {\r",
+											"    pm.expect(jsonData.username).to.eql(expectedUsername);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Email trả về chính xác\", function () {\r",
+											"    pm.expect(jsonData.email).to.eql(expectedEmail);\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{hostname}}:{{user_port}}/api/users/me",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{user_port}}",
+									"path": [
+										"api",
+										"users",
+										"me"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update My Profile",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Update thành công (200)\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"var jsonData = pm.response.json();\r",
+											"var sentName = pm.environment.get(\"update_name\");\r",
+											"var sentEmail = pm.environment.get(\"update_email\");\r",
+											"\r",
+											"// Validate xem server đã lưu cái mới chưa\r",
+											"pm.test(\"Tên đã được cập nhật\", function () {\r",
+											"    // Field trả về trong UserResponse của ge\r",
+											"    pm.expect(jsonData.name).to.eql(sentName); \r",
+											"    // Nếu UserResponse trả về là 'fullName' thì ge sửa thành jsonData.fullName nhé\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Email đã được cập nhật\", function () {\r",
+											"    pm.expect(jsonData.email).to.eql(sentEmail);\r",
+											"});\r",
+											"\r",
+											"// Quan trọng: Cập nhật lại biến môi trường 'email' gốc \r",
+											"// để các bài test sau (nếu có) dùng đúng email mới nhất\r",
+											"pm.environment.set(\"email\", sentEmail);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Tạo tên mới và email mới ngẫu nhiên để test update\r",
+											"var randomStr = Math.random().toString(36).substring(7);\r",
+											"var newName = \"Updated Name \" + randomStr;\r",
+											"var newEmail = \"updated_\" + randomStr + \"@gmail.com\";\r",
+											"\r",
+											"// Lưu vào biến môi trường để dùng cho Body và Verify sau này\r",
+											"pm.environment.set(\"update_name\", newName);\r",
+											"pm.environment.set(\"update_email\", newEmail);\r",
+											"\r",
+											"console.log(\"Dữ liệu update chuẩn bị: \" + newName + \" | \" + newEmail);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"{{update_name}}\",\r\n    \"email\": \"{{update_email}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{hostname}}:{{user_port}}/api/users/me",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{user_port}}",
+									"path": [
+										"api",
+										"users",
+										"me"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete User",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Hàm deleteUser trong Java là void, thường Controller sẽ trả về 200 OK hoặc 204 No Content\r",
+											"pm.test(\"Xóa user thành công\", function () {\r",
+											"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);\r",
+											"});\r",
+											"\r",
+											"// Verify phụ: Thử gọi lại API Get Profile của user này, nó phải trả về lỗi (User not found)\r",
+											"// Phần này ge có thể làm 1 request riêng để check cho chắc (Negative Test Case)"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\" : \"sonnguyen@gmail.com\", \r\n    \"name\" : \"Nguyen Hoang Son\"\r\n}"
+								},
+								"url": {
+									"raw": "{{hostname}}:{{user_port}}/api/users/admin1",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{user_port}}",
+									"path": [
+										"api",
+										"users",
+										"admin1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create User",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.environment.set(\"current_test_password\", \"password123\");"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response body has success message\", function () {\r",
+											"    var jsonData = pm.response.json();\r",
+											"    pm.expect(jsonData.message).to.eql(\"User created successfully\");\r",
+											"    \r",
+											"    pm.expect(jsonData.data).to.not. be.null;\r",
+											"    \r",
+											"    pm.environment.set(\"test_username\", jsonData.data.username);\r",
+											"    console.log(\"Created user: \" + jsonData.data.username);\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"username\": \"user_{{$timestamp}}\",\r\n  \"password\": \"password123\",\r\n  \"fullName\": \"Test User {{$randomInt}}\",\r\n  \"email\": \"test{{$timestamp}}@example.com\",\r\n  \"role\": \"ROLE_USER\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{hostname}}:{{user_port}}/api/users/create",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{user_port}}",
+									"path": [
+										"api",
+										"users",
+										"create"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Hello",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/users/hello",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"api",
+								"users",
+								"hello"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Auth Service",
+			"item": [
+				{
+					"name": "Auth",
+					"item": [
+						{
+							"name": "Register",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const randomStr = Math.random().toString(36).substring(7);\r",
+											"\r",
+											"const genUsername = \"user_\" + randomStr;\r",
+											"const genEmail = \"email_\" + randomStr + \"@gmail.com\";\r",
+											"const genPassword = \"12345678\"; \r",
+											"\r",
+											"pm.environment.set(\"username\", genUsername);\r",
+											"pm.environment.set(\"email\", genEmail);\r",
+											"pm.environment.set(\"password\", genPassword);\r",
+											"\r",
+											"console.log(\"Đã tạo user ảo: \" + genUsername);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Đăng ký thành công (Status 200)\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"username\": \"{{username}}\",\r\n  \"password\": \"{{password}}\",\r\n  \"email\": \"{{email}}\",\r\n  \"name\": \"Test User\",\r\n  \"role\": \"ROLE_USER\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{hostname}}:{{auth_port}}/api/auth/register",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{auth_port}}",
+									"path": [
+										"api",
+										"auth",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Login thành công (Status 200)\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"var jsonData = pm.response.json();\r",
+											"\r",
+											"pm.test(\"Có trả về Token\", function () {\r",
+											"    pm.expect(jsonData.token).to.not.be.undefined;\r",
+											"});\r",
+											"\r",
+											"if (jsonData.token) {\r",
+											"    pm.environment.set(\"token\", jsonData.token);\r",
+											"    console.log(\"Token lấy được là: \" + jsonData.token);\r",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"username\": \"{{username}}\",\r\n    \"password\": \"{{password}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{hostname}}:{{auth_port}}/api/auth/login",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{auth_port}}",
+									"path": [
+										"api",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Role",
+					"item": [
+						{
+							"name": "User",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTc2NDkwMTA2MywiZXhwIjoxNzY0OTA0NjYzfQ.sai5-EDUk6-pEnh70oL8AkWdmm4vE4C6agYpxqYyZyg",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{hostname}}:{{auth_port}}/api/roles/user",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{auth_port}}",
+									"path": [
+										"api",
+										"roles",
+										"user"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Admin",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTc2NDkwMTA2MywiZXhwIjoxNzY0OTA0NjYzfQ.sai5-EDUk6-pEnh70oL8AkWdmm4vE4C6agYpxqYyZyg",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{hostname}}:{{auth_port}}/api/roles/admin",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{auth_port}}",
+									"path": [
+										"api",
+										"roles",
+										"admin"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Moderator",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb2RlcmF0b3IiLCJpYXQiOjE3NjQ4MzYyNDYsImV4cCI6MTc2NDgzOTg0Nn0.nKtrvjgJ5TRGzfgJ_xUzV60VB-u3B6RvBX5meUMF6eQ",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{hostname}}:{{auth_port}}/api/roles/mod",
+									"host": [
+										"{{hostname}}"
+									],
+									"port": "{{auth_port}}",
+									"path": [
+										"api",
+										"roles",
+										"mod"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Hello",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTc2NDkwMDY3MCwiZXhwIjoxNzY0OTA0MjcwfQ.b1McuPJIAJcljdkyYiFsX-PbB9slfFkkt8z4Rh0BsHo",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{hostname}}:{{auth_port}}/api/auth/hello",
+							"host": [
+								"{{hostname}}"
+							],
+							"port": "{{auth_port}}",
+							"path": [
+								"api",
+								"auth",
+								"hello"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
