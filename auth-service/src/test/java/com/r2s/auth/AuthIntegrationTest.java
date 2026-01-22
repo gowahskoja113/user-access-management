@@ -18,8 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -47,44 +46,45 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk());
 
-        // dang ki lan 2 trung username => 400
+        // register again with same username
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Username already exists"));
     }
 
     // 2. login_returns401_whenWrongPassword
     @Test
     void login_returns401_whenWrongPassword() throws Exception {
-        // Đăng ký trước
+        // Register user
         RegisterRequest req = new RegisterRequest("user", "pass123", "a@a.com", "A", null);
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)));
 
-        // Login sai pass
+        // Login with wrong password
         LoginRequest loginReq = new LoginRequest("user", "wrongpass");
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginReq)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Invalid username or password"));
     }
 
     // 3. me_returns200_andEmail_whenBearerTokenValid
     @Test
     void login_returnsJwtToken_whenCredentialsValid() throws Exception {
-        // 1. Register
+        //register
         RegisterRequest req = new RegisterRequest(
-                "meuser", "123", "me@test.com", "Me", null
-        );
+                "meuser", "123", "me@test.com", "Me", null);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk());
 
-        // 2. Login
+        //login
         LoginRequest loginReq = new LoginRequest("meuser", "123");
 
         MvcResult result = mockMvc.perform(post("/api/auth/login")
@@ -94,7 +94,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.token").exists())
                 .andReturn();
 
-        // 3. Verify token format
+        //verify token format
         String token = objectMapper
                 .readTree(result.getResponse().getContentAsString())
                 .get("token")
@@ -115,7 +115,12 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
 
         // Verify DB
         assertEquals(1, userRepository.count());
-        assertEquals("new@test.com", userRepository.findByUsername("newuser").get().getEmail());
+
+        // Verify saved data
+        var savedUser = userRepository.findByUsername("newuser").orElseThrow();
+        assertEquals("new@test.com", savedUser.getEmail());
+        assertEquals("New", savedUser.getName());
+        assertEquals(Role.ROLE_USER, savedUser.getRole());
     }
 
     // 5. login_returns200_andToken_whenCredentialsValid
@@ -129,10 +134,43 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
 
         // Login
         LoginRequest loginReq = new LoginRequest("loginuser", "123");
-        mockMvc.perform(post("/api/auth/login")
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginReq)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").exists());
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andReturn();
+
+        // Verify token format
+        String token = objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
+        assertThat(token.split("\\.")).hasSize(3);
+    }
+
+    // 6. register_returns400_whenFieldsAreBlank
+    @Test
+    void register_returns400_whenFieldsAreBlank() throws Exception {
+        // Username và password để rỗng
+        RegisterRequest req = new RegisterRequest("", "", "invalid-email", "", Role.ROLE_USER);
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.password").exists())
+                .andExpect(jsonPath("$.username").exists());
+    }
+
+    // 7. login_returns400_whenFieldsAreBlank
+    @Test
+    void login_returns400_whenFieldsAreBlank() throws Exception {
+        LoginRequest req = new LoginRequest("", "");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.username").exists())
+                .andExpect(jsonPath("$.password").exists());
     }
 }

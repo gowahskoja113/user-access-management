@@ -18,11 +18,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -42,49 +40,44 @@ class UserIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    // Test POST /api/users/create
     @Test
     @WithMockUser(roles = "ADMIN")
     void createUser_shouldSaveToDb_andReturnSuccess() throws Exception {
-        // GIVEN
         UserRequest request = new UserRequest("new_user", "123456", "New User", "new@gmail.com", Role.ROLE_USER);
 
-        // WHEN
         mockMvc.perform(post("/api/users/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-
-                // THEN (Check API trả về)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("new_user"));
 
-        // THEN (Check Database - Logic Integration y hệt DB thật)
         User savedUser = userRepository.findByUsername("new_user").orElseThrow();
-        assert savedUser.getEmail().equals("new@gmail.com");
+        assertEquals("new@gmail.com", savedUser.getEmail());
     }
 
+    // Test POST /api/users/create with duplicate username
     @Test
     @WithMockUser(roles = "ADMIN")
     void createUser_shouldReturn400_whenUsernameExists() throws Exception {
-        // GIVEN: Lưu trước 1 user vào DB
         User existingUser = new User();
         existingUser.setUsername("duplicate");
         existingUser.setPassword(passwordEncoder.encode("1234"));
         existingUser.setEmail("exist@gmail.com");
-        existingUser.setName("Người Dùng Mẫu");
+        existingUser.setName("User Mau");
         existingUser.setRole(Role.ROLE_USER);
-
         userRepository.save(existingUser);
 
-        // WHEN: Tạo trùng tên
         UserRequest request = new UserRequest("duplicate", "123456", "Any Name", "any@gmail.com", Role.ROLE_USER);
 
-        // THEN
         mockMvc.perform(post("/api/users/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Username already exists"));
     }
 
+    // Test GET /api/users
     @Test
     @WithMockUser(roles = "ADMIN")
     void getAllUsers_shouldReturnList() throws Exception {
@@ -115,6 +108,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[0].username").exists());
     }
 
+    // Test GET /api/users/me
     @Test
     @WithMockUser(username = "myuser", roles = "USER")
     void getMyProfile_shouldReturnCorrectInfo() throws Exception {
@@ -134,6 +128,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.name").value("My Name"));
     }
 
+    // Test PUT /api/users/me
     @Test
     @WithMockUser(username = "update_user", roles = "USER")
     void updateMyProfile_shouldChangeDataInDB() throws Exception {
@@ -155,13 +150,13 @@ class UserIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("New Name"));
 
-        // THEN: Check DB xem đã đổi thật chưa
+        // THEN: Check Db
         User updated = userRepository.findByUsername("update_user").orElseThrow();
         assertTrue(updated.getName().equals("New Name"));
         assertTrue(updated.getEmail().equals("new@gmail.com"));
     }
 
-    // === 5. TEST XÓA (DELETE) ===
+    //Test DELETE /api/users/{username}
     @Test
     @WithMockUser(roles = "ADMIN")
     void deleteUser_shouldRemoveFromDB() throws Exception {
@@ -178,7 +173,37 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(delete("/api/users/todelete"))
                 .andExpect(status().isNoContent());
 
-        // THEN: Tìm trong DB
+        // THEN: find in DB
         assertFalse(userRepository.findByUsername("todelete").isPresent());
+    }
+
+    // Authorization tests
+    @Test
+    @WithMockUser(roles = "USER")
+    void getAllUsers_shouldReturn403_whenRoleIsUser() throws Exception {
+        mockMvc.perform(get("/api/users"))
+                .andExpect(status().isForbidden());
+    }
+
+    // 401 when not logged in
+    @Test
+    void getAllUsers_shouldReturn401_whenNotLoggedIn() throws Exception {
+        mockMvc.perform(get("/api/users"))
+                .andExpect(status().isForbidden());
+    }
+
+    // Validation tests
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createUser_returns400_whenPayloadInvalid() throws Exception {
+        // Request lacking username and invalid email
+        UserRequest request = new UserRequest("", "123456", "Name", "not-an-email", Role.ROLE_USER);
+
+        mockMvc.perform(post("/api/users/create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.username").exists())
+                .andExpect(jsonPath("$.email").exists());
     }
 }
