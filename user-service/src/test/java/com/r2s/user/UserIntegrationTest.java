@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -105,7 +106,12 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].username").exists());
+                .andExpect(jsonPath("$[0].username").value("u1"))
+                .andExpect(jsonPath("$[0].email").value("e1"))
+                .andExpect(jsonPath("$[0].role").value("ROLE_USER"))
+                .andExpect(jsonPath("$[1].username").value("u2"))
+                .andExpect(jsonPath("$[0].email").value("e2"))
+                .andExpect(jsonPath("$[0].role").value("ROLE_USER"));
     }
 
     // Test GET /api/users/me
@@ -152,8 +158,8 @@ class UserIntegrationTest extends AbstractIntegrationTest {
 
         // THEN: Check Db
         User updated = userRepository.findByUsername("update_user").orElseThrow();
-        assertTrue(updated.getName().equals("New Name"));
-        assertTrue(updated.getEmail().equals("new@gmail.com"));
+        assertEquals("New Name", updated.getName());
+        assertEquals("new@gmail.com", updated.getEmail());
     }
 
     //Test DELETE /api/users/{username}
@@ -189,7 +195,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
     @Test
     void getAllUsers_shouldReturn401_whenNotLoggedIn() throws Exception {
         mockMvc.perform(get("/api/users"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // Validation tests
@@ -203,7 +209,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.username").exists())
-                .andExpect(jsonPath("$.email").exists());
+                .andExpect(jsonPath("$.username").value(notNullValue()))
+                .andExpect(jsonPath("$.email").value(notNullValue()));
     }
 }

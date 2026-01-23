@@ -1,6 +1,7 @@
 package com.r2s.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import com.r2s.auth.dto.request.LoginRequest;
 import com.r2s.auth.dto.request.RegisterRequest;
 import com.r2s.core.entity.Role;
@@ -16,7 +17,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -114,13 +117,13 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
 
         // Verify DB
-        assertEquals(1, userRepository.count());
-
-        // Verify saved data
         var savedUser = userRepository.findByUsername("newuser").orElseThrow();
+
+        // Assert important fields
         assertEquals("new@test.com", savedUser.getEmail());
         assertEquals("New", savedUser.getName());
         assertEquals(Role.ROLE_USER, savedUser.getRole());
+        assertNotNull(savedUser.getId());
     }
 
     // 5. login_returns200_andToken_whenCredentialsValid
@@ -143,8 +146,11 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                 .andReturn();
 
         // Verify token format
-        String token = objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
-        assertThat(token.split("\\.")).hasSize(3);
+        String token = JsonPath.read(result.getResponse().getContentAsString(), "$.token");
+
+        assertThat(token).isNotBlank();
+        assertThat(token.split("\\.")).hasSize(3)
+                .withFailMessage("Wrong JWT format");
     }
 
     // 6. register_returns400_whenFieldsAreBlank
@@ -157,8 +163,8 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.password").exists())
-                .andExpect(jsonPath("$.username").exists());
+                .andExpect(jsonPath("$.password").value(notNullValue()))
+                .andExpect(jsonPath("$.username").value(notNullValue()));
     }
 
     // 7. login_returns400_whenFieldsAreBlank
@@ -170,7 +176,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.username").exists())
-                .andExpect(jsonPath("$.password").exists());
+                .andExpect(jsonPath("$.password").value(notNullValue()))
+                .andExpect(jsonPath("$.username").value(notNullValue()));
     }
 }

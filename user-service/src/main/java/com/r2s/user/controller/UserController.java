@@ -38,7 +38,7 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UserResponse> updateMyProfile(@RequestBody UpdateUserRequest request,
+    public ResponseEntity<UserResponse> updateMyProfile( @Valid @RequestBody UpdateUserRequest request,
                                                         Authentication authentication) {
         String username = authentication.getName();
         return ResponseEntity.ok(userService.updateUser(username, request));

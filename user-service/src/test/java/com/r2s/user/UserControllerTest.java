@@ -15,6 +15,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.List;
 
@@ -53,8 +54,14 @@ class UserControllerTest {
 
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2))) // Check size
-                .andExpect(jsonPath("$[0].username").value("admin"));
+                .andExpect(jsonPath("$", hasSize(2)))
+                // [P2] Assert rõ ràng các field quan trọng trong List
+                .andExpect(jsonPath("$[0].username").value("admin"))
+                .andExpect(jsonPath("$[0].email").value("admin@gmail.com"))
+                .andExpect(jsonPath("$[0].role").value("ROLE_ADMIN"))
+                .andExpect(jsonPath("$[1].username").value("Jane"))
+                .andExpect(jsonPath("$[1].email").value("jane@gmail.com"))
+                .andExpect(jsonPath("$[1].role").value("ROLE_USER"));
 
         verify(userService).getAllUsers();
     }
@@ -78,7 +85,8 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 // check important fields
                 .andExpect(jsonPath("$.data.username").value("john"))
-                .andExpect(jsonPath("$.data.email").value("john@gmail.com"));
+                .andExpect(jsonPath("$.data.email").value("john@gmail.com"))
+                .andExpect(jsonPath("$.data.role").value("ROLE_USER"));
 
         verify(userService).createUser(any(UserRequest.class));
     }
@@ -127,5 +135,30 @@ class UserControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(userService).deleteUser("john");
+    }
+
+    @Test
+    @WithMockUser(roles = {"ADMIN"})
+    void createUser_returns400_whenPayloadInvalid() throws Exception {
+        // send empty username and invalid email
+        UserRequest request = new UserRequest("", "", "", "invalid-email", Role.ROLE_USER);
+
+        mockMvc.perform(post("/api/users/create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.username").value(notNullValue()))
+                .andExpect(jsonPath("$.email").value(notNullValue()));
+    }
+
+    @Test
+    @WithMockUser(username = "john", roles = {"USER"})
+    void updateMyProfile_returns400_whenPayloadInvalid() throws Exception {
+        UpdateUserRequest request = new UpdateUserRequest("invalid-email", "");
+
+        mockMvc.perform(put("/api/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 }
