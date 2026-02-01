@@ -74,6 +74,9 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Grant permission for mvnw
+        run: chmod +x mvnw
+
       # Install PostgreSQL client
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -102,7 +105,6 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/${{ env.USER_DB }}
           SPRING_DATASOURCE_USERNAME: ${{ env.POSTGRES_USER }}
           SPRING_DATASOURCE_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-
   # 3️ - DEPLOY JOB
   deploy:
     name: Deploy Applications
