@@ -30,12 +30,12 @@ jobs:
           cache: 'maven'
 
       # Allow mvn execution
-      - name: Grant permission for mvn
-        run: chmod +x mvn
+      - name: Grant permission for mvnw
+        run: chmod +x mvnw
 
       # Build all modules without tests
       - name: Build with Maven
-        run: ./mvn clean install -DskipTests
+        run: ./mvnw clean install -DskipTests
 
       # Save build artifacts
       - name: Upload build artifact
@@ -89,7 +89,7 @@ jobs:
 
       # Test auth-service
       - name: Test auth-service
-        run: ./mvn clean test -pl auth-service
+        run: ./mvnw clean test -pl auth-service
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/${{ env.AUTH_DB }}
           SPRING_DATASOURCE_USERNAME: ${{ env.POSTGRES_USER }}
@@ -97,11 +97,12 @@ jobs:
 
       # Test user-service
       - name: Test user-service
-        run: ./mvn clean test -pl user-service
+        run: ./mvnw clean test -pl user-service
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/${{ env.USER_DB }}
           SPRING_DATASOURCE_USERNAME: ${{ env.POSTGRES_USER }}
           SPRING_DATASOURCE_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+
   # 3️ - DEPLOY JOB
   deploy:
     name: Deploy Applications
