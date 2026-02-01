@@ -1,0 +1,140 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: 12345678
+  AUTH_DB: auth-service
+  USER_DB: user-service
+
+# 1 - BUILD JOB
+jobs:
+  build:
+    name: Build Project
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Java setup
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # Allow mvnw execution
+      - name: Grant permission for mvnw
+        run: chmod +x mvnw
+
+      # Build all modules without tests
+      - name: Build with Maven
+        run: ./mvnw clean install -DskipTests
+
+      # Save build artifacts
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jars
+          path: |
+            **/target/*.jar
+
+  # 2️ - TEST JOB
+  test:
+    name: Test Services
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      postgres-db:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Grant permission for mvnw
+        run: chmod +x mvnw
+
+      # Install PostgreSQL client
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      # Create necessary databases
+      - name: Create Databases
+        run: |
+          export PGPASSWORD=${{ env.POSTGRES_PASSWORD }}
+          psql -h localhost -U ${{ env.POSTGRES_USER }} -d postgres \
+            -c "CREATE DATABASE \"${{ env.AUTH_DB }}\";"
+          psql -h localhost -U ${{ env.POSTGRES_USER }} -d postgres \
+            -c "CREATE DATABASE \"${{ env.USER_DB }}\";"
+
+      # Test auth-service
+      - name: Test auth-service
+        run: ./mvnw clean test -pl auth-service
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/${{ env.AUTH_DB }}
+          SPRING_DATASOURCE_USERNAME: ${{ env.POSTGRES_USER }}
+          SPRING_DATASOURCE_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+
+      # Test user-service
+      - name: Test user-service
+        run: ./mvnw clean test -pl user-service
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/${{ env.USER_DB }}
+          SPRING_DATASOURCE_USERNAME: ${{ env.POSTGRES_USER }}
+          SPRING_DATASOURCE_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+  # 3️ - DEPLOY JOB
+  deploy:
+    name: Deploy Applications
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: jars
+
+      # AUTH SERVICE
+      - name: Run auth-service
+        run: |
+          docker run -d \
+            --name auth-service \
+            -p 8081:8081 \
+            -v $(pwd)/auth-service/target/*.jar:/app.jar \
+            mcr.microsoft.com/openjdk/jdk:17-ubuntu \
+            java -jar /app.jar
+
+      # USER SERVICE
+      - name: Run user-service
+        run: |
+          docker run -d \
+            --name user-service \
+            -p 8082:8082 \
+            -v $(pwd)/user-service/target/*.jar:/app.jar \
+            mcr.microsoft.com/openjdk/jdk:17-ubuntu \
+            java -jar /app.jar

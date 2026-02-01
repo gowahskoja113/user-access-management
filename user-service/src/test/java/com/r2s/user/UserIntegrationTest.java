@@ -110,8 +110,8 @@ class UserIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[0].email").value("e1"))
                 .andExpect(jsonPath("$[0].role").value("ROLE_USER"))
                 .andExpect(jsonPath("$[1].username").value("u2"))
-                .andExpect(jsonPath("$[0].email").value("e2"))
-                .andExpect(jsonPath("$[0].role").value("ROLE_USER"));
+                .andExpect(jsonPath("$[1].email").value("e2"))
+                .andExpect(jsonPath("$[1].role").value("ROLE_USER"));
     }
 
     // Test GET /api/users/me
