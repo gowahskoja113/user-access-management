@@ -1,36 +1,30 @@
 package com.r2s.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.r2s.auth.controller.AuthController;
+import com.jayway.jsonpath.JsonPath;
 import com.r2s.auth.dto.request.LoginRequest;
 import com.r2s.auth.dto.request.RegisterRequest;
 import com.r2s.auth.dto.response.AuthResponse;
 import com.r2s.auth.service.AuthService;
 import com.r2s.core.entity.Role;
-import com.r2s.core.exception.GlobalExceptionHandler;
-import com.r2s.core.repository.UserRepository;
-import com.r2s.core.security.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.notNullValue;
 
-@WebMvcTest(AuthController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@ContextConfiguration(classes = AuthController.class)
-@Import(GlobalExceptionHandler.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 class AuthControllerTest {
 
     @Autowired
@@ -39,14 +33,7 @@ class AuthControllerTest {
     @MockBean
     private AuthService authService;
 
-    @MockBean
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private UserDetailsService userDetailsService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // 1. register_callsServiceWithExactPayload_whenBodyValid
     @Test
@@ -58,7 +45,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(authService, times(1)).register(any(RegisterRequest.class));
+        verify(authService).register(refEq(request));
     }
 
     // 2. register_returns200_whenBodyValid
@@ -80,8 +67,9 @@ class AuthControllerTest {
         when(authService.login(any())).thenReturn(new AuthResponse("token"));
 
         mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
 
         verify(authService).login(refEq(request));
     }
@@ -90,14 +78,23 @@ class AuthControllerTest {
     @Test
     void login_returns200_andToken_whenCredentialsValid() throws Exception {
         LoginRequest request = new LoginRequest("user", "123");
-        AuthResponse response = new AuthResponse("access-token-123");
+
+        String mockJwt = "header.payload.signature";
+        AuthResponse response = new AuthResponse(mockJwt);
+
         when(authService.login(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("access-token-123"));
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(result -> {
+                    String token = JsonPath.read(
+                            result.getResponse().getContentAsString(), "$.token"
+                    );
+                    assertEquals(3, token.split("\\.").length, "Wrong JWT format");
+                });
     }
 
     // 5. login_returns401_whenInvalidCredentials
@@ -114,4 +111,32 @@ class AuthControllerTest {
                 .andExpect(content().string("Invalid username or password"));
     }
 
+    // 6. register_returns400_whenPayloadInvalid (Thêm mới)
+    @Test
+    void register_returns400_whenPayloadInvalid() throws Exception {
+
+        RegisterRequest request = new RegisterRequest("", "", "invalid-email", "", Role.ROLE_USER);
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.username").value(notNullValue()))
+                .andExpect(jsonPath("$.email").value(notNullValue()))
+                .andExpect(jsonPath("$.password").value(notNullValue()));
+    }
+
+    // 7. login_returns400_whenPayloadInvalid
+    @Test
+    void login_returns400_whenPayloadInvalid() throws Exception {
+        // send empty username and password
+        LoginRequest request = new LoginRequest("", "");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.username").value(notNullValue()))
+                .andExpect(jsonPath("$.password").value(notNullValue()));
+    }
 }
