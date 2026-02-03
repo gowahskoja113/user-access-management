@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
-public class UserServiceApplicationTest {
+public class UserServiceImplApplicationTest {
 
     @Test
     void contextLoads() {

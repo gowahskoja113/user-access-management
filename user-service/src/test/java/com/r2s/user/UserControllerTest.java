@@ -5,8 +5,7 @@ import com.r2s.core.entity.Role;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
 import com.r2s.user.dto.response.UserResponse;
-import com.r2s.core.entity.User;
-import com.r2s.user.service.UserService;
+import com.r2s.user.service.UserServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,11 +14,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -37,11 +36,11 @@ class UserControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private UserService userService;
+    private UserServiceImpl userServiceImpl;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // === GET /api/users === (ADMIN only)
+    // === GET /api/users ===
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void getAllUsers_shouldReturnListOfUsers() throws Exception {
@@ -50,45 +49,41 @@ class UserControllerTest {
                 new UserResponse(Role.ROLE_USER, "jane@gmail.com", "Jane Smith", "Jane")
         );
 
-        when(userService.getAllUsers()).thenReturn(mockUsers);
+        when(userServiceImpl.getAllUsers()).thenReturn(mockUsers);
 
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                // [P2] Assert rõ ràng các field quan trọng trong List
-                .andExpect(jsonPath("$[0].username").value("admin"))
-                .andExpect(jsonPath("$[0].email").value("admin@gmail.com"))
-                .andExpect(jsonPath("$[0].role").value("ROLE_ADMIN"))
-                .andExpect(jsonPath("$[1].username").value("Jane"))
-                .andExpect(jsonPath("$[1].email").value("jane@gmail.com"))
-                .andExpect(jsonPath("$[1].role").value("ROLE_USER"));
+                .andExpect(jsonPath("$.data", hasSize(2)))
+                .andExpect(jsonPath("$.data[0].username").value("admin"))
+                .andExpect(jsonPath("$.data[0].email").value("admin@gmail.com"))
+                .andExpect(jsonPath("$.data[0].role").value("ROLE_ADMIN"))
+                .andExpect(jsonPath("$.data[1].username").value("Jane"))
+                .andExpect(jsonPath("$.data[1].email").value("jane@gmail.com"))
+                .andExpect(jsonPath("$.data[1].role").value("ROLE_USER"));
 
-        verify(userService).getAllUsers();
+        verify(userServiceImpl).getAllUsers();
     }
 
-    // === POST /api/users/create === (ADMIN only)
+    // === POST /api/users/create ===
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void createUser_shouldReturnCreatedUser() throws Exception {
         UserRequest request = new UserRequest("john", "1234", "John Doe", "john@gmail.com", Role.ROLE_USER);
 
-        // Mock the service to return a User object
-        User createdUser = User.builder()
-                .username("john").password("1234").name("John Doe").email("john@gmail.com").role(Role.ROLE_USER)
-                .build();
+        UserResponse createdUserResponse = new UserResponse(Role.ROLE_USER, "john@gmail.com", "John Doe", "john");
 
-        when(userService.createUser(any(UserRequest.class))).thenReturn(createdUser);
+        when(userServiceImpl.createUser(any(UserRequest.class))).thenReturn(createdUserResponse);
 
         mockMvc.perform(post("/api/users/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                // check important fields
+                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.username").value("john"))
                 .andExpect(jsonPath("$.data.email").value("john@gmail.com"))
                 .andExpect(jsonPath("$.data.role").value("ROLE_USER"));
 
-        verify(userService).createUser(any(UserRequest.class));
+        verify(userServiceImpl).createUser(any(UserRequest.class));
     }
 
     // === GET /api/users/me ===
@@ -96,14 +91,15 @@ class UserControllerTest {
     @WithMockUser(username = "john", roles = {"USER"})
     void getMyProfile_shouldReturnUserProfile() throws Exception {
         UserResponse mockResponse = new UserResponse(Role.ROLE_USER, "john@gmail.com", "User", "john");
-        when(userService.getUserByUsername("john")).thenReturn(mockResponse);
+
+        when(userServiceImpl.getUserByUsername("john")).thenReturn(mockResponse);
 
         mockMvc.perform(get("/api/users/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("john"))
-                .andExpect(jsonPath("$.email").value("john@gmail.com"));
+                .andExpect(jsonPath("$.data.username").value("john"))
+                .andExpect(jsonPath("$.data.email").value("john@gmail.com"));
 
-        verify(userService).getUserByUsername("john");
+        verify(userServiceImpl).getUserByUsername("john");
     }
 
     // === PUT /api/users/me ===
@@ -113,28 +109,29 @@ class UserControllerTest {
         UpdateUserRequest updateRequest = new UpdateUserRequest("updated@example.com", "Updated Name");
         UserResponse updated = new UserResponse(Role.ROLE_USER, "updated@example.com", "Updated Name", "john");
 
-        when(userService.updateUser(eq("john"), any(UpdateUserRequest.class))).thenReturn(updated);
+        when(userServiceImpl.updateUser(eq("john"), any(UpdateUserRequest.class))).thenReturn(updated);
 
         mockMvc.perform(put("/api/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Updated Name"))
-                .andExpect(jsonPath("$.email").value("updated@example.com"));
+                .andExpect(jsonPath("$.data.name").value("Updated Name"))
+                .andExpect(jsonPath("$.data.email").value("updated@example.com"));
 
-        verify(userService).updateUser(eq("john"), any(UpdateUserRequest.class));
+        verify(userServiceImpl).updateUser(eq("john"), any(UpdateUserRequest.class));
     }
 
-    // === DELETE /api/users/{username} === (ADMIN only)
+    // === DELETE /api/users/{username} ===
     @Test
     @WithMockUser(roles = {"ADMIN"})
-    void deleteUser_shouldReturnNoContent() throws Exception {
-        doNothing().when(userService).deleteUser("john");
+    void deleteUser_shouldReturnSuccess() throws Exception {
+        doNothing().when(userServiceImpl).deleteUser("john");
 
         mockMvc.perform(delete("/api/users/john"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("User deleted successfully"));
 
-        verify(userService).deleteUser("john");
+        verify(userServiceImpl).deleteUser("john");
     }
 
     @Test

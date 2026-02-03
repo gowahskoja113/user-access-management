@@ -75,17 +75,17 @@ class UserIntegrationTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Username already exists"));
+
+                .andExpect(content().string("Username already exists: duplicate"));
     }
 
     // Test GET /api/users
     @Test
     @WithMockUser(roles = "ADMIN")
     void getAllUsers_shouldReturnList() throws Exception {
-        // dọn db trước khi test
         userRepository.deleteAll();
 
-        // GIVEN: Seed 2 users vào DB
+        // GIVEN
         User user1 = new User();
         user1.setUsername("u1");
         user1.setPassword("p");
@@ -105,13 +105,13 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         // WHEN & THEN
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].username").value("u1"))
-                .andExpect(jsonPath("$[0].email").value("e1"))
-                .andExpect(jsonPath("$[0].role").value("ROLE_USER"))
-                .andExpect(jsonPath("$[1].username").value("u2"))
-                .andExpect(jsonPath("$[1].email").value("e2"))
-                .andExpect(jsonPath("$[1].role").value("ROLE_USER"));
+                .andExpect(jsonPath("$.data", hasSize(2)))
+                .andExpect(jsonPath("$.data[0].username").value("u1"))
+                .andExpect(jsonPath("$.data[0].email").value("e1"))
+                .andExpect(jsonPath("$.data[0].role").value("ROLE_USER"))
+                .andExpect(jsonPath("$.data[1].username").value("u2"))
+                .andExpect(jsonPath("$.data[1].email").value("e2"))
+                .andExpect(jsonPath("$.data[1].role").value("ROLE_USER"));
     }
 
     // Test GET /api/users/me
@@ -130,8 +130,8 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         // WHEN & THEN
         mockMvc.perform(get("/api/users/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("myuser"))
-                .andExpect(jsonPath("$.name").value("My Name"));
+                .andExpect(jsonPath("$.data.username").value("myuser"))
+                .andExpect(jsonPath("$.data.name").value("My Name"));
     }
 
     // Test PUT /api/users/me
@@ -154,7 +154,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("New Name"));
+                .andExpect(jsonPath("$.data.name").value("New Name"));
 
         // THEN: Check Db
         User updated = userRepository.findByUsername("update_user").orElseThrow();
@@ -177,7 +177,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
 
         // WHEN
         mockMvc.perform(delete("/api/users/todelete"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         // THEN: find in DB
         assertFalse(userRepository.findByUsername("todelete").isPresent());

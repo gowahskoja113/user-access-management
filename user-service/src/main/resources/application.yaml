@@ -7,7 +7,6 @@ spring:
   profiles:
     active: dev
 
-# JWT configuration
 jwt:
   secret: IGtr+uHjE2NDtJR7x37IqqEFAG0oj4LAcWaQlcPAoSqW05g3MtQC3ZaQDKmSme/0X72eAuLPpNfVbBYdmAd23Q==
   expiration: 3600000
