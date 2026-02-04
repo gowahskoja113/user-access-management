@@ -1,4 +1,4 @@
-package com.r2s.user.dto.response;
+package com.r2s.core.response;
 
 import com.r2s.core.entity.Role;
 

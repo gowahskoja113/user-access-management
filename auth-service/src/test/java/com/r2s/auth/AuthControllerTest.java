@@ -5,7 +5,7 @@ import com.jayway.jsonpath.JsonPath;
 import com.r2s.auth.dto.request.LoginRequest;
 import com.r2s.auth.dto.request.RegisterRequest;
 import com.r2s.auth.dto.response.AuthResponse;
-import com.r2s.auth.service.AuthService;
+import com.r2s.auth.service.impl.AuthServiceImpl;
 import com.r2s.core.entity.Role;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ class AuthControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private AuthService authService;
+    private AuthServiceImpl authServiceImpl;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -45,7 +45,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(authService).register(refEq(request));
+        verify(authServiceImpl).register(refEq(request));
     }
 
     // 2. register_returns200_whenBodyValid
@@ -64,14 +64,14 @@ class AuthControllerTest {
     @Test
     void login_callsServiceWithExactPayload_whenCredentialsValid() throws Exception {
         LoginRequest request = new LoginRequest("user", "123");
-        when(authService.login(any())).thenReturn(new AuthResponse("token"));
+        when(authServiceImpl.login(any())).thenReturn(new AuthResponse("token"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(authService).login(refEq(request));
+        verify(authServiceImpl).login(refEq(request));
     }
 
     // 4. login_returns200_andToken_whenCredentialsValid
@@ -82,7 +82,7 @@ class AuthControllerTest {
         String mockJwt = "header.payload.signature";
         AuthResponse response = new AuthResponse(mockJwt);
 
-        when(authService.login(any())).thenReturn(response);
+        when(authServiceImpl.login(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -101,7 +101,7 @@ class AuthControllerTest {
     @Test
     void login_returns401_whenInvalidCredentials() throws Exception {
         LoginRequest request = new LoginRequest("user", "wrong");
-        when(authService.login(any()))
+        when(authServiceImpl.login(any()))
                 .thenThrow(new BadCredentialsException("Invalid password"));
 
         mockMvc.perform(post("/api/auth/login")

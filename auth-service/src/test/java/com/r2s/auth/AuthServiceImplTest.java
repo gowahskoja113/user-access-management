@@ -3,7 +3,7 @@ package com.r2s.auth;
 import com.r2s.auth.dto.request.LoginRequest;
 import com.r2s.auth.dto.request.RegisterRequest;
 import com.r2s.auth.dto.response.AuthResponse;
-import com.r2s.auth.service.AuthService;
+import com.r2s.auth.service.impl.AuthServiceImpl;
 import com.r2s.core.entity.Role;
 import com.r2s.core.entity.User;
 import com.r2s.core.exception.CustomException;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AuthServiceTest {
+class AuthServiceImplTest {
 
     @Mock
     private UserRepository userRepo;
@@ -34,7 +34,7 @@ class AuthServiceTest {
     private JwtUtil jwtUtil;
 
     @InjectMocks
-    private AuthService authService;
+    private AuthServiceImpl authServiceImpl;
 
     // 1. register_returnsResponse_whenUsernameAvailable_withGivenRoleAdmin
     @Test
@@ -46,7 +46,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode("pass")).thenReturn("encodedPass");
 
         // Act
-        authService.register(request);
+        authServiceImpl.register(request);
 
         // Assert
         verify(userRepo).save(argThat(user ->
@@ -64,7 +64,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode("pass")).thenReturn("encodedPass");
 
         // Act
-        authService.register(request);
+        authServiceImpl.register(request);
 
         // Assert
         verify(userRepo).save(argThat(user ->
@@ -78,7 +78,7 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest("unknown", "pass");
         when(userRepo.findByUsername("unknown")).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () -> authService.login(request));
+        assertThrows(UsernameNotFoundException.class, () -> authServiceImpl.login(request));
     }
 
     // 4. login_throws_whenPasswordWrong
@@ -92,7 +92,7 @@ class AuthServiceTest {
         when(userRepo.findByUsername("user")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongpass", "encodedRealPass")).thenReturn(false);
 
-        assertThrows(BadCredentialsException.class, () -> authService.login(request));
+        assertThrows(BadCredentialsException.class, () -> authServiceImpl.login(request));
     }
 
     // 5. register_throws_whenUsernameExists
@@ -102,7 +102,7 @@ class AuthServiceTest {
 
         when(userRepo.findByUsername("exist")).thenReturn(Optional.of(new User()));
 
-        assertThrows(CustomException.class, () -> authService.register(request));
+        assertThrows(CustomException.class, () -> authServiceImpl.register(request));
     }
 
     // 6. login_returnToken_whenCredentialsValid
@@ -117,7 +117,7 @@ class AuthServiceTest {
         when(passwordEncoder.matches("pass", "encodedPass")).thenReturn(true);
         when(jwtUtil.generateToken("user")).thenReturn("dummy-token");
 
-        AuthResponse response = authService.login(request);
+        AuthResponse response = authServiceImpl.login(request);
 
         assertNotNull(response);
         assertEquals("dummy-token", response.token()); // Giả sử record AuthResponse có field token

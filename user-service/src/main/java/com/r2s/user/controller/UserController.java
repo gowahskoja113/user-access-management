@@ -4,7 +4,7 @@ import com.r2s.core.response.ApiResponse;
 import com.r2s.core.response.ResponseBuilder;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.user.dto.response.UserResponse;
+import com.r2s.core.response.UserResponse;
 import com.r2s.user.service.UserManagementService;
 import com.r2s.user.service.UserProfileService;
 import io.swagger.v3.oas.annotations.Operation;

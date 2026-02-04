@@ -2,7 +2,7 @@ package com.r2s.user.mapper;
 
 import com.r2s.core.entity.User;
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.user.dto.response.UserResponse;
+import com.r2s.core.response.UserResponse;
 import org.springframework.stereotype.Component;
 
 @Component

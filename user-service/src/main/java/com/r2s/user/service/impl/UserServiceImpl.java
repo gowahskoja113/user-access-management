@@ -1,12 +1,14 @@
-package com.r2s.user.service;
+package com.r2s.user.service.impl;
 
 import com.r2s.core.entity.User;
 import com.r2s.core.exception.CustomException;
 import com.r2s.core.repository.UserRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.user.dto.response.UserResponse;
+import com.r2s.core.response.UserResponse;
 import com.r2s.user.mapper.UserMapper;
+import com.r2s.user.service.UserManagementService;
+import com.r2s.user.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;

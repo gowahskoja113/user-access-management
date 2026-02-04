@@ -1,7 +1,7 @@
 package com.r2s.user.service;
 
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.user.dto.response.UserResponse;
+import com.r2s.core.response.UserResponse;
 
 import java.util.List;
 
