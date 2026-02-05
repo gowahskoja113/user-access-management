@@ -1,16 +1,33 @@
-# Chặn tất cả thư mục target ở mọi ngóc ngách
+# --- Build & Dependency ---
 .m2-temp/
 **/target/
 target/
 
-# Chặn file cấu hình IDE (IntelliJ, Eclipse, VSCode)
+# --- IDE Config (IntelliJ, Eclipse, VSCode) ---
 .idea/
 *.iml
 .vscode/
 .classpath
 .project
 .settings/
+*.sts
+*.factorypath
 
-# Chặn file hệ thống và file jar nói chung
+# --- System Files ---
 .DS_Store
-**/*.jar
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
+
+# --- SECRETS & ENV---
+.env
+*.env
+.env.*
+
+# --- Docker ---
+postgres_data/
+
+# --- Spring Boot ---
+HELP.md

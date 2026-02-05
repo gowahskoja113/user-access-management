@@ -1,20 +1,12 @@
 spring:
-  # Xóa hoặc comment lại phần datasource connection cứng này
-  # datasource:
-  #   url: ...
-  #   username: ...
-  #   password: ...
-
-  # Giữ lại driver (tùy chọn, Spring Boot thường tự nhận diện được)
   datasource:
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      # Rất quan trọng: vẫn cần cái này để Hibernate tự tạo bảng trong container
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true # Giữ lại để debug cho dễ
+    show-sql: true
     properties:
       hibernate:
-        format_sql: true # Format câu SQL cho dễ đọc hơn
+        format_sql: true

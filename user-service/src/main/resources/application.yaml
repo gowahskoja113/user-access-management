@@ -8,5 +8,5 @@ spring:
     active: dev
 
 jwt:
-  secret: IGtr+uHjE2NDtJR7x37IqqEFAG0oj4LAcWaQlcPAoSqW05g3MtQC3ZaQDKmSme/0X72eAuLPpNfVbBYdmAd23Q==
+  secret: ${JWT_SECRET}
   expiration: 3600000

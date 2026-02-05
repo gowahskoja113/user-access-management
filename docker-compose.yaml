@@ -1,51 +1,77 @@
 version: '3.8'
 
+x-db-credentials: &db-credentials
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+x-service-base: &service-base
+  environment:
+    SPRING_PROFILES_ACTIVE: docker
+    # Truyền user/pass vào để Spring Boot dùng
+    SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+    SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    # Truyền cấu hình JWT vào để Spring Security dùng
+    JWT_SECRET: ${JWT_SECRET}
+    JWT_EXPIRATION: ${JWT_EXPIRATION}
+  depends_on:
+    - postgres-db
+  networks:
+    - r2s-network
+
+# ==========================================
+# 2. SERVICES
+# ==========================================
 services:
-  # 1. DATABASE POSTGRES
+  # --- Database Postgres ---
   postgres-db:
     image: postgres:15
     container_name: postgres-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Passw0rd
-      POSTGRES_DB: auth-service
+      <<: *db-credentials
+      # Mặc định tạo DB này trước. DB thứ 2 sẽ do file init.sql tạo.
+      POSTGRES_DB: ${AUTH_DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432" # Map port 5432 của docker ra port trong .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # File này cực quan trọng để tạo nhiều DB (Xem hướng dẫn bên dưới)
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - r2s-network
 
-  # 2. AUTH SERVICE
+  # --- Auth Service ---
   auth-service:
+    <<: *service-base
     build:
       context: ./auth-service
       dockerfile: Dockerfile
     container_name: auth-service
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/auth-service
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: Passw0rd
-    ports:
-      - "8081:8081"
-    depends_on:
-      - postgres-db
 
-  # 3. USER SERVICE
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${AUTH_DB_NAME}
+    ports:
+      - "${AUTH_PORT}:8081"
+
+  # --- User Service ---
   user-service:
+    <<: *service-base
     build:
       context: ./user-service
       dockerfile: Dockerfile
     container_name: user-service
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/auth-service
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: Passw0rd
+      # Trỏ vào DB user-access-management
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${USER_DB_NAME}
     ports:
-      - "8082:8082"
-    depends_on:
-      - postgres-db
+      - "${USER_PORT}:8082"
 
+# ==========================================
+# 3. VOLUMES & NETWORKS
+# ==========================================
 volumes:
   postgres_data:
+    name: uam_postgres_data
+
+networks:
+  r2s-network:
+    driver: bridge
