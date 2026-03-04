@@ -4,10 +4,13 @@ spring:
     username: postgres
     password: 12345678
     driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         format_sql: true

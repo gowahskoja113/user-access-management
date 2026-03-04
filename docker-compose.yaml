@@ -1,22 +1,26 @@
 version: '3.8'
 
+# ==========================================
+# 1. ANCHORS
+# ==========================================
 x-db-credentials: &db-credentials
   POSTGRES_USER: ${POSTGRES_USER}
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
 x-service-base: &service-base
-  environment:
-    SPRING_PROFILES_ACTIVE: docker
-    # Truyền user/pass vào để Spring Boot dùng
-    SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-    SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-    # Truyền cấu hình JWT vào để Spring Security dùng
-    JWT_SECRET: ${JWT_SECRET}
-    JWT_EXPIRATION: ${JWT_EXPIRATION}
   depends_on:
     - postgres-db
   networks:
     - r2s-network
+
+x-env-base: &env-base
+  SPRING_PROFILES_ACTIVE: docker
+  # Truyền user/pass vào để Spring Boot dùng
+  SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+  SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+  # Truyền cấu hình JWT vào để Spring Security dùng
+  JWT_SECRET: ${JWT_SECRET}
+  JWT_EXPIRATION: ${JWT_EXPIRATION}
 
 # ==========================================
 # 2. SERVICES
@@ -47,7 +51,7 @@ services:
       dockerfile: Dockerfile
     container_name: auth-service
     environment:
-
+      <<: *env-base # Merge các biến chung vào đây
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${AUTH_DB_NAME}
     ports:
       - "${AUTH_PORT}:8081"
@@ -60,6 +64,7 @@ services:
       dockerfile: Dockerfile
     container_name: user-service
     environment:
+      <<: *env-base # Merge các biến chung vào đây
       # Trỏ vào DB user-access-management
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${USER_DB_NAME}
     ports:
