@@ -1,12 +1,31 @@
 server:
-  port: 8082
+  port: 8081
 
 spring:
   application:
-    name: user-service
+    name: auth-service
   profiles:
     active: dev
 
 jwt:
   secret: ${JWT_SECRET}
   expiration: 3600000
+
+info:
+  app:
+    name: "User Access Management - Auth Service"
+    description: "Service xử lý xác thực và phân quyền"
+    version: "1.0.0"
+    java-version: "23"
+
+management:
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus,metrics"
+  endpoint:
+    health:
+      show-details: always

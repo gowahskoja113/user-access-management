@@ -21,7 +21,7 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @Autowired
+    @Autowired(required = false)
     private UserDetailsService userDetailsService;
 
     @Override
@@ -42,23 +42,21 @@ public class JwtFilter extends OncePerRequestFilter {
         // 2. Nếu có username và chưa đăng nhập (Context null)
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // Lấy thông tin user từ DB lên
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            // CHỖ NÀY QUAN TRỌNG: Check xem có Bean UserDetailsService nào tồn tại không
+            if (userDetailsService != null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            // 3. Kiểm tra token có hợp lệ với user này không
-            if (jwtUtil.validateToken(token, userDetails)) {
-
-                // Tạo đối tượng xác thực
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // Set vào Security Context
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                if (jwtUtil.validateToken(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            } else {
+                logger.warn("UserDetailsService is null. Authentication skipped for user: " + username);
             }
         }
 
