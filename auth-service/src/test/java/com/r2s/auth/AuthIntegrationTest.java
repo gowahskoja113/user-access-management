@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.r2s.auth.dto.request.LoginRequest;
 import com.r2s.auth.dto.request.RegisterRequest;
-import com.r2s.core.entity.Role;
+import com.r2s.core.entity.RoleName;
 import com.r2s.core.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +42,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
     @Test
     void register_returns400_whenDuplicateUsername() throws Exception {
 
-        RegisterRequest req = new RegisterRequest("dupUser", "123", "dup@test.com", "Duplicate", Role.ROLE_USER);
+        RegisterRequest req = new RegisterRequest("dupUser", "123", "dup@test.com", "Duplicate", RoleName.ROLE_USER);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -109,7 +109,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
     // 4. register_returns200_andPersistUser_whenValid
     @Test
     void register_returns200_andPersistUser_whenValid() throws Exception {
-        RegisterRequest req = new RegisterRequest("newuser", "123", "new@test.com", "New", Role.ROLE_USER);
+        RegisterRequest req = new RegisterRequest("newuser", "123", "new@test.com", "New", RoleName.ROLE_USER);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -122,7 +122,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
         // Assert important fields
         assertEquals("new@test.com", savedUser.getEmail());
         assertEquals("New", savedUser.getName());
-        assertEquals(Role.ROLE_USER, savedUser.getRole());
+        assertEquals(RoleName.ROLE_USER, savedUser.getRoleName());
         assertNotNull(savedUser.getId());
     }
 
@@ -157,7 +157,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
     @Test
     void register_returns400_whenFieldsAreBlank() throws Exception {
         // Username và password để rỗng
-        RegisterRequest req = new RegisterRequest("", "", "invalid-email", "", Role.ROLE_USER);
+        RegisterRequest req = new RegisterRequest("", "", "invalid-email", "", RoleName.ROLE_USER);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

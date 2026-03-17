@@ -1,12 +1,23 @@
--- 1. Xóa bảng cũ nếu tồn tại để tránh xung đột cấu trúc
-DROP TABLE IF EXISTS users CASCADE;
-
--- 2. Tạo bảng users khớp với Entity Java
+-- USERS TABLE
 CREATE TABLE users (
-    id BIGSERIAL PRIMARY KEY,
-    username VARCHAR(255) UNIQUE NOT NULL,
+    id UUID PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
+    enabled BOOLEAN DEFAULT TRUE,
     name VARCHAR(255) NOT NULL,
-    role VARCHAR(50) -- Lưu giá trị String của Enum Role
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+-- ROLES TABLE
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
+ -- USER_ROLES (Many-to-Many)
+CREATE TABLE user_roles (
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    role_id INT REFERENCES roles(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, role_id)
+);
+ -- INSERT DEFAULT ROLES
+INSERT INTO roles (name) VALUES ('ROLE_USER'), ('ROLE_ADMIN');

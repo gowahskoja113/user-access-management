@@ -1,6 +1,6 @@
 package com.r2s.user.dto.request;
 
-import com.r2s.core.entity.Role;
+import com.r2s.core.entity.RoleName;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,6 +22,6 @@ public record UserRequest(
         String email,
 
         @NotNull(message = "Role không được để trống")
-        Role role
+        RoleName roleName
 ) {
 }

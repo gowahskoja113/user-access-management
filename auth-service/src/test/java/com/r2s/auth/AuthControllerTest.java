@@ -6,7 +6,7 @@ import com.r2s.auth.dto.request.LoginRequest;
 import com.r2s.auth.dto.request.RegisterRequest;
 import com.r2s.auth.dto.response.AuthResponse;
 import com.r2s.auth.service.impl.AuthServiceImpl;
-import com.r2s.core.entity.Role;
+import com.r2s.core.entity.RoleName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -38,7 +38,7 @@ class AuthControllerTest {
     // 1. register_callsServiceWithExactPayload_whenBodyValid
     @Test
     void register_callsServiceWithExactPayload_whenBodyValid() throws Exception {
-        RegisterRequest request = new RegisterRequest("user", "123", "a@a.com", "Name", Role.ROLE_USER);
+        RegisterRequest request = new RegisterRequest("user", "123", "a@a.com", "Name", RoleName.ROLE_USER);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -115,7 +115,7 @@ class AuthControllerTest {
     @Test
     void register_returns400_whenPayloadInvalid() throws Exception {
 
-        RegisterRequest request = new RegisterRequest("", "", "invalid-email", "", Role.ROLE_USER);
+        RegisterRequest request = new RegisterRequest("", "", "invalid-email", "", RoleName.ROLE_USER);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

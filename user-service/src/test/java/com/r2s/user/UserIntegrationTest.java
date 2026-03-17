@@ -1,7 +1,7 @@
 package com.r2s.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.r2s.core.entity.Role;
+import com.r2s.core.entity.RoleName;
 import com.r2s.core.entity.User;
 import com.r2s.core.repository.UserRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
@@ -45,7 +45,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void createUser_shouldSaveToDb_andReturnSuccess() throws Exception {
-        UserRequest request = new UserRequest("new_user", "123456", "New User", "new@gmail.com", Role.ROLE_USER);
+        UserRequest request = new UserRequest("new_user", "123456", "New User", "new@gmail.com", RoleName.ROLE_USER);
 
         mockMvc.perform(post("/api/users/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -66,10 +66,10 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         existingUser.setPassword(passwordEncoder.encode("1234"));
         existingUser.setEmail("exist@gmail.com");
         existingUser.setName("User Mau");
-        existingUser.setRole(Role.ROLE_USER);
+        existingUser.setRoleName(RoleName.ROLE_USER);
         userRepository.save(existingUser);
 
-        UserRequest request = new UserRequest("duplicate", "123456", "Any Name", "any@gmail.com", Role.ROLE_USER);
+        UserRequest request = new UserRequest("duplicate", "123456", "Any Name", "any@gmail.com", RoleName.ROLE_USER);
 
         mockMvc.perform(post("/api/users/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -91,7 +91,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         user1.setPassword("p");
         user1.setName("n1");
         user1.setEmail("e1");
-        user1.setRole(Role.ROLE_USER);
+        user1.setRoleName(RoleName.ROLE_USER);
         userRepository.save(user1);
 
         User user2 = new User();
@@ -99,7 +99,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         user2.setPassword("p");
         user2.setName("n2");
         user2.setEmail("e2");
-        user2.setRole(Role.ROLE_USER);
+        user2.setRoleName(RoleName.ROLE_USER);
         userRepository.save(user2);
 
         // WHEN & THEN
@@ -124,7 +124,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         me.setPassword("pass");
         me.setName("My Name");
         me.setEmail("my@gmail.com");
-        me.setRole(Role.ROLE_USER);
+        me.setRoleName(RoleName.ROLE_USER);
         userRepository.save(me);
 
         // WHEN & THEN
@@ -144,7 +144,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         original.setPassword("pass");
         original.setName("Old Name");
         original.setEmail("old@gmail.com");
-        original.setRole(Role.ROLE_USER);
+        original.setRoleName(RoleName.ROLE_USER);
         userRepository.save(original);
 
         UpdateUserRequest updateRequest = new UpdateUserRequest("new@gmail.com", "New Name");
@@ -172,7 +172,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
         toDelete.setPassword("pass");
         toDelete.setName("Del");
         toDelete.setEmail("del@gmail.com");
-        toDelete.setRole(Role.ROLE_USER);
+        toDelete.setRoleName(RoleName.ROLE_USER);
         userRepository.save(toDelete);
 
         // WHEN
@@ -203,7 +203,7 @@ class UserIntegrationTest extends AbstractIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void createUser_returns400_whenPayloadInvalid() throws Exception {
         // Request lacking username and invalid email
-        UserRequest request = new UserRequest("", "123456", "Name", "not-an-email", Role.ROLE_USER);
+        UserRequest request = new UserRequest("", "123456", "Name", "not-an-email", RoleName.ROLE_USER);
 
         mockMvc.perform(post("/api/users/create")
                         .contentType(MediaType.APPLICATION_JSON)

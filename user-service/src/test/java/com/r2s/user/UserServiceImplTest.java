@@ -1,6 +1,6 @@
 package com.r2s.user;
 
-import com.r2s.core.entity.Role;
+import com.r2s.core.entity.RoleName;
 import com.r2s.core.entity.User;
 import com.r2s.core.exception.CustomException;
 import com.r2s.core.repository.UserRepository;
@@ -53,13 +53,13 @@ class UserServiceImplTest {
         User user = new User();
         user.setUsername(TEST_USERNAME);
         user.setEmail(TEST_EMAIL);
-        user.setRole(Role.ROLE_USER);
+        user.setRoleName(RoleName.ROLE_USER);
         user.setPassword("rawPassword");
         return user;
     }
 
     private UserResponse createMockResponse() {
-        return new UserResponse(Role.ROLE_USER, TEST_EMAIL, TEST_NAME, TEST_USERNAME);
+        return new UserResponse(RoleName.ROLE_USER, TEST_EMAIL, TEST_NAME, TEST_USERNAME);
     }
 
     @Nested
@@ -75,7 +75,7 @@ class UserServiceImplTest {
 
             when(userRepository.findAll()).thenReturn(List.of(user1, user2));
             when(userMapper.toUserResponse(user1)).thenReturn(createMockResponse());
-            when(userMapper.toUserResponse(user2)).thenReturn(new UserResponse(Role.ROLE_ADMIN, "admin@gmail.com", "Admin", "admin"));
+            when(userMapper.toUserResponse(user2)).thenReturn(new UserResponse(RoleName.ROLE_ADMIN, "admin@gmail.com", "Admin", "admin"));
 
             // WHEN
             List<UserResponse> result = userService.getAllUsers();
@@ -93,7 +93,7 @@ class UserServiceImplTest {
         @DisplayName("Should encode password and save user when valid")
         void createUser_shouldSaveAndReturnUserResponse_whenValid() {
             // GIVEN
-            UserRequest request = new UserRequest(TEST_USERNAME, "1234", TEST_NAME, TEST_EMAIL, Role.ROLE_USER);
+            UserRequest request = new UserRequest(TEST_USERNAME, "1234", TEST_NAME, TEST_EMAIL, RoleName.ROLE_USER);
             User entityToSave = createMockUser();
             User savedEntity = createMockUser();
 
@@ -119,7 +119,7 @@ class UserServiceImplTest {
         @Test
         @DisplayName("Should throw exception when username already exists")
         void createUser_shouldThrowException_whenUsernameExists() {
-            UserRequest request = new UserRequest(TEST_USERNAME, "1234", TEST_NAME, TEST_EMAIL, Role.ROLE_USER);
+            UserRequest request = new UserRequest(TEST_USERNAME, "1234", TEST_NAME, TEST_EMAIL, RoleName.ROLE_USER);
             when(userRepository.existsByUsername(TEST_USERNAME)).thenReturn(true);
 
             assertThrows(CustomException.class, () -> userService.createUser(request));
@@ -157,7 +157,7 @@ class UserServiceImplTest {
             // GIVEN
             User existingUser = createMockUser();
             UpdateUserRequest updateRequest = new UpdateUserRequest(NEW_EMAIL, "New Name");
-            UserResponse updatedResponse = new UserResponse(Role.ROLE_USER, NEW_EMAIL, "New Name", TEST_USERNAME);
+            UserResponse updatedResponse = new UserResponse(RoleName.ROLE_USER, NEW_EMAIL, "New Name", TEST_USERNAME);
 
             when(userRepository.findByUsername(TEST_USERNAME)).thenReturn(Optional.of(existingUser));
             when(userRepository.save(any(User.class))).thenReturn(existingUser);

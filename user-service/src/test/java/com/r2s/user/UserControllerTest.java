@@ -1,7 +1,7 @@
 package com.r2s.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.r2s.core.entity.Role;
+import com.r2s.core.entity.RoleName;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
 import com.r2s.core.response.UserResponse;
@@ -45,8 +45,8 @@ class UserControllerTest {
     @WithMockUser(roles = {"ADMIN"})
     void getAllUsers_shouldReturnListOfUsers() throws Exception {
         List<UserResponse> mockUsers = List.of(
-                new UserResponse(Role.ROLE_ADMIN, "admin@gmail.com", "Admin", "admin"),
-                new UserResponse(Role.ROLE_USER, "jane@gmail.com", "Jane Smith", "Jane")
+                new UserResponse(RoleName.ROLE_ADMIN, "admin@gmail.com", "Admin", "admin"),
+                new UserResponse(RoleName.ROLE_USER, "jane@gmail.com", "Jane Smith", "Jane")
         );
 
         when(userServiceImpl.getAllUsers()).thenReturn(mockUsers);
@@ -68,9 +68,9 @@ class UserControllerTest {
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void createUser_shouldReturnCreatedUser() throws Exception {
-        UserRequest request = new UserRequest("john", "1234", "John Doe", "john@gmail.com", Role.ROLE_USER);
+        UserRequest request = new UserRequest("john", "1234", "John Doe", "john@gmail.com", RoleName.ROLE_USER);
 
-        UserResponse createdUserResponse = new UserResponse(Role.ROLE_USER, "john@gmail.com", "John Doe", "john");
+        UserResponse createdUserResponse = new UserResponse(RoleName.ROLE_USER, "john@gmail.com", "John Doe", "john");
 
         when(userServiceImpl.createUser(any(UserRequest.class))).thenReturn(createdUserResponse);
 
@@ -90,7 +90,7 @@ class UserControllerTest {
     @Test
     @WithMockUser(username = "john", roles = {"USER"})
     void getMyProfile_shouldReturnUserProfile() throws Exception {
-        UserResponse mockResponse = new UserResponse(Role.ROLE_USER, "john@gmail.com", "User", "john");
+        UserResponse mockResponse = new UserResponse(RoleName.ROLE_USER, "john@gmail.com", "User", "john");
 
         when(userServiceImpl.getUserByUsername("john")).thenReturn(mockResponse);
 
@@ -107,7 +107,7 @@ class UserControllerTest {
     @WithMockUser(username = "john", roles = {"USER"})
     void updateMyProfile_shouldUpdateUser() throws Exception {
         UpdateUserRequest updateRequest = new UpdateUserRequest("updated@example.com", "Updated Name");
-        UserResponse updated = new UserResponse(Role.ROLE_USER, "updated@example.com", "Updated Name", "john");
+        UserResponse updated = new UserResponse(RoleName.ROLE_USER, "updated@example.com", "Updated Name", "john");
 
         when(userServiceImpl.updateUser(eq("john"), any(UpdateUserRequest.class))).thenReturn(updated);
 
@@ -138,7 +138,7 @@ class UserControllerTest {
     @WithMockUser(roles = {"ADMIN"})
     void createUser_returns400_whenPayloadInvalid() throws Exception {
         // send empty username and invalid email
-        UserRequest request = new UserRequest("", "", "", "invalid-email", Role.ROLE_USER);
+        UserRequest request = new UserRequest("", "", "", "invalid-email", RoleName.ROLE_USER);
 
         mockMvc.perform(post("/api/users/create")
                         .contentType(MediaType.APPLICATION_JSON)

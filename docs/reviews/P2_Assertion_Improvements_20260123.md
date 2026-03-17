@@ -74,7 +74,7 @@ mockMvc.perform(get("/api/users"))
    - Chỉ biết có field `username`, không biết giá trị đúng hay sai
 
 2. **Không đảm bảo dữ liệu đúng:**
-   - Test seed 2 users với `username="u1"`, `email="e1"`, `role=ROLE_USER`
+   - Test seed 2 users với `username="u1"`, `email="e1"`, `roleName=ROLE_USER`
    - Nhưng chỉ check field tồn tại → không biết có đúng giá trị không
 
 3. **Test không tự mô tả:**
@@ -89,19 +89,19 @@ mockMvc.perform(get("/api/users"))
     // Assert đầy đủ các field quan trọng cho item đầu
     .andExpect(jsonPath("$[0].username").value("u1"))
     .andExpect(jsonPath("$[0].email").value("e1"))
-    .andExpect(jsonPath("$[0].role").value("ROLE_USER"))
+    .andExpect(jsonPath("$[0].roleName").value("ROLE_USER"))
     .andExpect(jsonPath("$[0].name").value("n1"))
     // Assert item thứ 2
     .andExpect(jsonPath("$[1].username").value("u2"))
     .andExpect(jsonPath("$[1].email").value("e2"))
-    .andExpect(jsonPath("$[1].role").value("ROLE_USER"))
+    .andExpect(jsonPath("$[1].roleName").value("ROLE_USER"))
     .andExpect(jsonPath("$[1].name").value("n2"));
 ```
 
 ### 📝 Các file cần sửa
 
 1. **`user-service/src/test/java/com/r2s/user/UserIntegrationTest.java`**
-   - Dòng 112-115: Thêm assertions cho `email`, `role`, `name` của cả 2 items
+   - Dòng 112-115: Thêm assertions cho `email`, `roleName`, `name` của cả 2 items
 
 ---
 
@@ -207,7 +207,7 @@ void login_returns200_andToken_whenCredentialsValid() throws Exception {
 |------|------|--------|----------|
 | `user-service/.../UserIntegrationTest.java` | 62 | `assert ...equals()` | → `assertEquals()` |
 | `user-service/.../UserIntegrationTest.java` | 160-161 | `assertTrue(...equals())` | → `assertEquals()` |
-| `user-service/.../UserIntegrationTest.java` | 112-115 | List chỉ check `.exists()` | → Assert `email`, `role`, `name` |
+| `user-service/.../UserIntegrationTest.java` | 112-115 | List chỉ check `.exists()` | → Assert `email`, `roleName`, `name` |
 | `auth-service/.../AuthIntegrationTest.java` | 122-137 | Token chỉ check `.exists()` | → Assert non-empty + format 3 parts |
 
 ---

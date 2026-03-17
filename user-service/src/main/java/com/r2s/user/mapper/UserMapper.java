@@ -14,7 +14,7 @@ public class UserMapper {
         }
 
         return new UserResponse(
-                user.getRole(),
+                user.getRoleName(),
                 user.getEmail(),
                 user.getName(),
                 user.getUsername()
@@ -31,7 +31,7 @@ public class UserMapper {
         user.setUsername(request.username());
         user.setName(request.fullName());
         user.setEmail(request.email());
-        user.setRole(request.role());
+        user.setRoleName(request.roleName());
 
         return user;
     }

@@ -49,10 +49,15 @@ public class LocalAuthenticationStrategy implements AuthenticationStrategy {
                         new UsernameNotFoundException("User not found")
                 );
 
+        String[] authorities = user.getRoles()
+                .stream()
+                .map(role -> role.getName().name())
+                .toArray(String[]::new);
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
-                .authorities(user.getRole().name())
+                .authorities(authorities)
                 .build();
     }
 }
