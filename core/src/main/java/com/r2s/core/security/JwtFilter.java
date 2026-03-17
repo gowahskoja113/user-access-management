@@ -21,7 +21,7 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @Autowired(required = false)
+    @Autowired
     private UserDetailsService userDetailsService;
 
     @Override
@@ -41,22 +41,19 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 2. Nếu có username và chưa đăng nhập (Context null)
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            // CHỖ NÀY QUAN TRỌNG: Check xem có Bean UserDetailsService nào tồn tại không
-            if (userDetailsService != null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (jwtUtil.validateToken(token, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                if (jwtUtil.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
-            } else {
-                logger.warn("UserDetailsService is null. Authentication skipped for user: " + username);
+                // Log thử ở đây để xem authorities thực sự là gì
+                logger.info("Authenticated user: " + username + ", with roles: " + userDetails.getAuthorities());
             }
         }
 

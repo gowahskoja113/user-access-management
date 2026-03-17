@@ -37,7 +37,13 @@ public class LocalAuthenticationStrategy implements AuthenticationStrategy {
             throw new BadCredentialsException("Invalid password");
         }
 
-        String token = jwtUtil.generateToken(user.getUsername());
+        String[] authorities = user.getRoles()
+                .stream()
+                .map(role -> role.getName().name())
+                .toArray(String[]::new);
+
+        String token = jwtUtil.generateToken(user.getUsername(), authorities);
+
         return new AuthResponse(token);
     }
 

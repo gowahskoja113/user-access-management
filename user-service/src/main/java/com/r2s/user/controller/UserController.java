@@ -48,7 +48,6 @@ public class UserController {
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
         log.info("Retrieving all users");
         List<UserResponse> users = userManagementService.getAllUsers();
-
         return responseBuilder.buildSuccessResponse(users, "Retrieved all users successfully");
     }
 

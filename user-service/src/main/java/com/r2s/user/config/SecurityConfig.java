@@ -53,21 +53,21 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return username -> org.springframework.security.core.userdetails.User
-                .withUsername(username)
-                .password("")
-                .authorities("ROLE_USER")
-                .build();
-    }
-
-    @Bean
-    public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
+//
+//    @Bean
+//    public UserDetailsService userDetailsService() {
+//        return username -> org.springframework.security.core.userdetails.User
+//                .withUsername(username)
+//                .password("")
+//                .authorities("ROLE_USER")
+//                .build();
+//    }
+//
+//    @Bean
+//    public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
+//        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+//        authProvider.setUserDetailsService(userDetailsService);
+//        authProvider.setPasswordEncoder(passwordEncoder());
+//        return authProvider;
+//    }
 }
