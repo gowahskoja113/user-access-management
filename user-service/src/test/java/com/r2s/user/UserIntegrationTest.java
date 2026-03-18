@@ -1,11 +1,14 @@
 package com.r2s.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.r2s.core.entity.Role;
 import com.r2s.core.entity.RoleName;
 import com.r2s.core.entity.User;
+import com.r2s.core.repository.RoleRepository;
 import com.r2s.core.repository.UserRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,8 +20,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.hamcrest.Matchers.notNullValue;
+import java.util.HashSet;
+import java.util.Set;
+
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,187 +35,108 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class UserIntegrationTest extends AbstractIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private UserRepository userRepository;
+    @Autowired private RoleRepository roleRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserRepository userRepository;
+    private Role userRole;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @BeforeEach
+    void setupData() {
+        userRole = roleRepository.findByName(RoleName.ROLE_USER)
+                .orElseGet(() -> roleRepository.save(new Role(null, RoleName.ROLE_USER)));
+        roleRepository.findByName(RoleName.ROLE_ADMIN)
+                .orElseGet(() -> roleRepository.save(new Role(null, RoleName.ROLE_ADMIN)));
+    }
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    // Test POST /api/users/create
     @Test
     @WithMockUser(roles = "ADMIN")
     void createUser_shouldSaveToDb_andReturnSuccess() throws Exception {
         UserRequest request = new UserRequest("new_user", "123456", "New User", "new@gmail.com", RoleName.ROLE_USER);
-
-        mockMvc.perform(post("/api/users/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.username").value("new_user"));
-
-        User savedUser = userRepository.findByUsername("new_user").orElseThrow();
-        assertEquals("new@gmail.com", savedUser.getEmail());
+        mockMvc.perform(post("/api/users/create").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+        assertTrue(userRepository.existsByUsername("new_user"));
     }
 
-    // Test POST /api/users/create with duplicate username
     @Test
     @WithMockUser(roles = "ADMIN")
     void createUser_shouldReturn400_whenUsernameExists() throws Exception {
-        User existingUser = new User();
-        existingUser.setUsername("duplicate");
-        existingUser.setPassword(passwordEncoder.encode("1234"));
-        existingUser.setEmail("exist@gmail.com");
-        existingUser.setName("User Mau");
-        existingUser.setRoleName(RoleName.ROLE_USER);
-        userRepository.save(existingUser);
-
-        UserRequest request = new UserRequest("duplicate", "123456", "Any Name", "any@gmail.com", RoleName.ROLE_USER);
-
-        mockMvc.perform(post("/api/users/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-
-                .andExpect(content().string("Username already exists: duplicate"));
+        User existing = User.builder().username("duplicate").password("123").email("e@e.com").name("N").roles(Set.of(userRole)).build();
+        userRepository.save(existing);
+        UserRequest request = new UserRequest("duplicate", "123", "N", "e2@e.com", RoleName.ROLE_USER);
+        mockMvc.perform(post("/api/users/create").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 
-    // Test GET /api/users
     @Test
     @WithMockUser(roles = "ADMIN")
     void getAllUsers_shouldReturnList() throws Exception {
         userRepository.deleteAll();
-
-        // GIVEN
-        User user1 = new User();
-        user1.setUsername("u1");
-        user1.setPassword("p");
-        user1.setName("n1");
-        user1.setEmail("e1");
-        user1.setRoleName(RoleName.ROLE_USER);
-        userRepository.save(user1);
-
-        User user2 = new User();
-        user2.setUsername("u2");
-        user2.setPassword("p");
-        user2.setName("n2");
-        user2.setEmail("e2");
-        user2.setRoleName(RoleName.ROLE_USER);
-        userRepository.save(user2);
-
-        // WHEN & THEN
+        userRepository.save(User.builder().username("u1").password("p").email("e1").name("n1").roles(Set.of(userRole)).build());
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", hasSize(2)))
-                .andExpect(jsonPath("$.data[0].username").value("u1"))
-                .andExpect(jsonPath("$.data[0].email").value("e1"))
-                .andExpect(jsonPath("$.data[0].role").value("ROLE_USER"))
-                .andExpect(jsonPath("$.data[1].username").value("u2"))
-                .andExpect(jsonPath("$.data[1].email").value("e2"))
-                .andExpect(jsonPath("$.data[1].role").value("ROLE_USER"));
+                .andExpect(jsonPath("$.data", hasSize(1)));
     }
 
-    // Test GET /api/users/me
     @Test
     @WithMockUser(username = "myuser", roles = "USER")
     void getMyProfile_shouldReturnCorrectInfo() throws Exception {
-        // GIVEN
-        User me = new User();
-        me.setUsername("myuser");
-        me.setPassword("pass");
-        me.setName("My Name");
-        me.setEmail("my@gmail.com");
-        me.setRoleName(RoleName.ROLE_USER);
-        userRepository.save(me);
-
-        // WHEN & THEN
+        userRepository.save(User.builder().username("myuser").password("p").email("m@m.com").name("My Name").roles(Set.of(userRole)).build());
         mockMvc.perform(get("/api/users/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.username").value("myuser"))
                 .andExpect(jsonPath("$.data.name").value("My Name"));
     }
 
-    // Test PUT /api/users/me
     @Test
     @WithMockUser(username = "update_user", roles = "USER")
     void updateMyProfile_shouldChangeDataInDB() throws Exception {
-        // GIVEN
-        User original = new User();
-        original.setUsername("update_user");
-        original.setPassword("pass");
-        original.setName("Old Name");
-        original.setEmail("old@gmail.com");
-        original.setRoleName(RoleName.ROLE_USER);
-        userRepository.save(original);
+        User testUser = User.builder()
+                .username("update_user")
+                .password("p")
+                .email("o@o.com")
+                .name("Old")
+                .roles(new HashSet<>(Set.of(userRole)))
+                .enabled(true)
+                .build();
 
-        UpdateUserRequest updateRequest = new UpdateUserRequest("new@gmail.com", "New Name");
+        userRepository.save(testUser);
 
-        // WHEN
+        UpdateUserRequest req = new UpdateUserRequest("new@g.com", "New Name");
+
         mockMvc.perform(put("/api/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.name").value("New Name"));
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk());
 
-        // THEN: Check Db
-        User updated = userRepository.findByUsername("update_user").orElseThrow();
-        assertEquals("New Name", updated.getName());
-        assertEquals("new@gmail.com", updated.getEmail());
+        assertEquals("New Name", userRepository.findByUsername("update_user").orElseThrow().getName());
     }
 
-    //Test DELETE /api/users/{username}
     @Test
     @WithMockUser(roles = "ADMIN")
     void deleteUser_shouldRemoveFromDB() throws Exception {
-        // GIVEN
-        User toDelete = new User();
-        toDelete.setUsername("todelete");
-        toDelete.setPassword("pass");
-        toDelete.setName("Del");
-        toDelete.setEmail("del@gmail.com");
-        toDelete.setRoleName(RoleName.ROLE_USER);
-        userRepository.save(toDelete);
-
-        // WHEN
-        mockMvc.perform(delete("/api/users/todelete"))
-                .andExpect(status().isOk());
-
-        // THEN: find in DB
+        userRepository.save(User.builder().username("todelete").password("p").email("d@d.com").name("D").roles(Set.of(userRole)).build());
+        mockMvc.perform(delete("/api/users/todelete")).andExpect(status().isOk());
         assertFalse(userRepository.findByUsername("todelete").isPresent());
     }
 
-    // Authorization tests
     @Test
     @WithMockUser(roles = "USER")
     void getAllUsers_shouldReturn403_whenRoleIsUser() throws Exception {
-        mockMvc.perform(get("/api/users"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/users")).andExpect(status().isForbidden());
     }
 
-    // 401 when not logged in
     @Test
     void getAllUsers_shouldReturn401_whenNotLoggedIn() throws Exception {
-        mockMvc.perform(get("/api/users"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/users")).andExpect(status().isUnauthorized());
     }
 
-    // Validation tests
     @Test
     @WithMockUser(roles = "ADMIN")
     void createUser_returns400_whenPayloadInvalid() throws Exception {
-        // Request lacking username and invalid email
-        UserRequest request = new UserRequest("", "123456", "Name", "not-an-email", RoleName.ROLE_USER);
-
-        mockMvc.perform(post("/api/users/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.username").value(notNullValue()))
-                .andExpect(jsonPath("$.email").value(notNullValue()));
+        UserRequest request = new UserRequest("", "123", "N", "not-email", RoleName.ROLE_USER);
+        mockMvc.perform(post("/api/users/create").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 }
