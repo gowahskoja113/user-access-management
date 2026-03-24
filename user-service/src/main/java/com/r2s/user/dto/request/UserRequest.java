@@ -5,13 +5,14 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.UUID;
+
 
 public record UserRequest(
 
         @NotBlank(message = "Username không được để trống")
         String username,
 
-        @NotBlank(message = "Password không được để trống")
         String password,
 
         @NotBlank(message = "Full name không được để trống")

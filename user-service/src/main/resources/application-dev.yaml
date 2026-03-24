@@ -1,9 +1,15 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/user-access-management-1
+    url: jdbc:postgresql://localhost:5432/user_db
     username: postgres
     password: 12345678
     driver-class-name: org.postgresql.Driver
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
   flyway:
     enabled: true

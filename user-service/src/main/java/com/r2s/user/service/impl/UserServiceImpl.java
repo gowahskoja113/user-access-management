@@ -1,7 +1,10 @@
 package com.r2s.user.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.r2s.core.entity.Outbox;
 import com.r2s.core.entity.User;
 import com.r2s.core.exception.CustomException;
+import com.r2s.core.repository.OutboxRepository;
 import com.r2s.core.repository.UserRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
@@ -16,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,8 +31,10 @@ public class UserServiceImpl implements UserManagementService, UserProfileServic
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final OutboxRepository outboxRepository;
 
     @Override
+    @Transactional
     public UserResponse createUser(UserRequest request) {
         log.debug("Creating new user with username: {}", request.username());
 
@@ -42,14 +48,27 @@ public class UserServiceImpl implements UserManagementService, UserProfileServic
 
         User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.password()));
+        User savedUser = userRepository.save(user);
 
         try {
-            User savedUser = userRepository.save(user);
-            return userMapper.toUserResponse(savedUser);
-        } catch (DataIntegrityViolationException e) {
+            String jsonPayload = new ObjectMapper().writeValueAsString(request);
+
+            Outbox outbox = Outbox.builder()
+                    .aggregateType("USER")
+                    .eventType("USER_CREATED")
+                    .payload(jsonPayload)
+                    .status("PENDING")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            outboxRepository.save(outbox);
+
+        } catch (Exception e) {
             log.error("Database constraint violation: {}", e.getMessage());
             throw new CustomException("User creation failed. Username or Email likely already exists.");
         }
+
+        return userMapper.toUserResponse(savedUser);
     }
 
     @Override

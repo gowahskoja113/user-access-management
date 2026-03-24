@@ -2,10 +2,12 @@ package com.r2s.auth.service.impl;
 
 import com.r2s.auth.dto.request.RegisterRequest;
 import com.r2s.auth.service.RegistrationService;
+import com.r2s.core.entity.Outbox;
 import com.r2s.core.entity.Role;
 import com.r2s.core.entity.RoleName;
 import com.r2s.core.entity.User;
 import com.r2s.core.exception.CustomException;
+import com.r2s.core.repository.OutboxRepository;
 import com.r2s.core.repository.RoleRepository;
 import com.r2s.core.repository.UserRepository;
 import com.r2s.core.response.UserResponse;
@@ -25,6 +27,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OutboxRepository outboxRepository;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -60,7 +64,31 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .stream()
                 .map(Role::getName)
                 .collect(Collectors.toSet());
+        try {
+            // QUAN TRỌNG: Tạo một Map hoặc một DTO chứa ID để gửi đi
+            // Đừng gửi thẳng 'request' vì nó không có trường ID
+            java.util.Map<String, Object> payload = new java.util.HashMap<>();
+            payload.put("id", savedUser.getId()); // Lấy ID vừa được tạo từ DB
+            payload.put("username", savedUser.getUsername());
+            payload.put("email", savedUser.getEmail());
+            payload.put("fullName", savedUser.getName()); // Map đúng tên field bên User Service
+            payload.put("roleName", targetRoleName);
 
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+
+            Outbox outbox = Outbox.builder()
+                    .aggregateType("USER")
+                    .eventType("USER_CREATED")
+                    .payload(jsonPayload)
+                    .status("PENDING")
+                    .createdAt(java.time.LocalDateTime.now())
+                    .build();
+
+            outboxRepository.save(outbox);
+
+        } catch (Exception e) {
+            throw new CustomException("Failed to sync user data: " + e.getMessage());
+        }
         return new UserResponse(
                 savedUser.getRoles(),
                 savedUser.getEmail(),

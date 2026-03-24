@@ -1,81 +1,101 @@
-version: '3.8'
-
 # ==========================================
-# 1. ANCHORS
+# 1. TEMPLATES (Cấu hình dùng chung)
 # ==========================================
 x-db-credentials: &db-credentials
-  POSTGRES_USER: ${POSTGRES_USER}
-  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_USER: ${POSTGRES_USER:-postgres}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-12345678}
 
-x-service-base: &service-base
-  depends_on:
-    - postgres-db
+x-networks: &networks
   networks:
     - r2s-network
-
-x-env-base: &env-base
-  SPRING_PROFILES_ACTIVE: docker
-  # Truyền user/pass vào để Spring Boot dùng
-  SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-  SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-  # Truyền cấu hình JWT vào để Spring Security dùng
-  JWT_SECRET: ${JWT_SECRET}
-  JWT_EXPIRATION: ${JWT_EXPIRATION}
 
 # ==========================================
 # 2. SERVICES
 # ==========================================
 services:
-  # --- Database Postgres ---
-  postgres-db:
+  # --- Database cho Auth Service ---
+  auth-db:
     image: postgres:15
-    container_name: postgres-db
+    container_name: auth-db
     environment:
       <<: *db-credentials
-      # Mặc định tạo DB này trước. DB thứ 2 sẽ do file init.sql tạo.
-      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_DB: auth_db
     ports:
-      - "${DB_PORT}:5432" # Map port 5432 của docker ra port trong .env
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      # File này cực quan trọng để tạo nhiều DB (Xem hướng dẫn bên dưới)
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - r2s-network
+      - auth_postgres_data:/var/lib/postgresql/data
+    <<: *networks
+
+  # --- Database cho User Service ---
+  user-db:
+    image: postgres:15
+    container_name: user-db
+    environment:
+      <<: *db-credentials
+      POSTGRES_DB: user_db
+    ports:
+      - "5433:5432" # Máy thật gọi 5433, vào container là 5432
+    volumes:
+      - user_postgres_data:/var/lib/postgresql/data
+    <<: *networks
+
+  # --- RabbitMQ (Anh đưa thư) ---
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # Cổng kết nối dữ liệu
+      - "15672:15672" # Giao diện quản lý (guest/guest)
+    <<: *networks
 
   # --- Auth Service ---
   auth-service:
-    <<: *service-base
     build:
       context: ./auth-service
       dockerfile: Dockerfile
     container_name: auth-service
+    depends_on:
+      - auth-db
+      - rabbitmq
     environment:
-      <<: *env-base # Merge các biến chung vào đây
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${AUTH_DB_NAME}
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-12345678}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
     ports:
-      - "${AUTH_PORT}:8081"
+      - "${AUTH_PORT:-8081}:8081"
+    <<: *networks
 
   # --- User Service ---
   user-service:
-    <<: *service-base
     build:
       context: ./user-service
       dockerfile: Dockerfile
     container_name: user-service
+    depends_on:
+      - user-db
+      - rabbitmq
     environment:
-      <<: *env-base # Merge các biến chung vào đây
-      # Trỏ vào DB user-access-management
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${USER_DB_NAME}
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/user_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-12345678}
+      SPRING_RABBITMQ_HOST: rabbitmq
     ports:
-      - "${USER_PORT}:8082"
+      - "${USER_PORT:-8082}:8082"
+    <<: *networks
 
 # ==========================================
 # 3. VOLUMES & NETWORKS
 # ==========================================
 volumes:
-  postgres_data:
-    name: uam_postgres_data
+  auth_postgres_data:
+    name: auth_postgres_data
+  user_postgres_data:
+    name: user_postgres_data
 
 networks:
   r2s-network:
