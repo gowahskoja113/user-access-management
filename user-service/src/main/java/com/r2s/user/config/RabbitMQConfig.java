@@ -13,6 +13,8 @@ public class RabbitMQConfig {
     public static final String EXCHANGE = "user.exchange";
     public static final String QUEUE = "auth.user.queue";
     public static final String ROUTING_KEY = "user.created.routing.key";
+    public static final String UPDATE_ROUTING_KEY = "user.updated.routing.key";
+    public static final String DELETE_ROUTING_KEY = "user.deleted.routing.key";
 
     @Bean
     public TopicExchange exchange() {

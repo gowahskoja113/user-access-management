@@ -1,7 +1,7 @@
 package com.r2s.user.mapper;
 
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.user.dto.request.response.UserResponse;
+import com.r2s.user.dto.response.UserResponse;
 import com.r2s.user.entity.UserProfile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class UserMapper {
-
 
     public UserResponse toUserResponse(UserProfile user) {
         if (user == null) {

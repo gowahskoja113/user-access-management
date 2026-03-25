@@ -9,6 +9,8 @@ import java.util.UUID;
 
 public record UserRequest(
 
+        UUID id,
+
         @NotBlank(message = "Username không được để trống")
         String username,
 

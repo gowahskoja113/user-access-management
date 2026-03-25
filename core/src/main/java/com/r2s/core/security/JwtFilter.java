@@ -6,14 +6,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -28,36 +29,39 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Lấy header Authorization
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String username = null;
 
-        // 1. Kiểm tra header có chứa Bearer Token không
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
-            username = jwtUtil.extractUsername(token);
-        }
-
-        // 2. Nếu có username và chưa đăng nhập (Context null)
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            if (jwtUtil.validateToken(token, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                // Log thử ở đây để xem authorities thực sự là gì
-                logger.info("Authenticated user: " + username + ", with roles: " + userDetails.getAuthorities());
+            try {
+                username = jwtUtil.extractUsername(token);
+            } catch (Exception e) {
+                logger.error("Token không hợp lệ hoặc đã hết hạn");
             }
         }
 
-        // Cho request đi tiếp
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Thay vì gọi DB, ta kiểm tra validity của token và lấy quyền từ Claims
+            if (jwtUtil.isTokenValid(token)) {
+                // Lấy danh sách quyền trực tiếp từ JWT
+                List<GrantedAuthority> authorities = jwtUtil.extractAuthorities(token);
+
+                // Tạo authToken mà không cần UserDetails object phức tạp
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        username, // Principal có thể chỉ là String username
+                        null,
+                        authorities
+                );
+
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                logger.info("Authenticated via JWT: " + username + " with roles: " + authorities);
+            }
+        }
+
         filterChain.doFilter(request, response);
     }
 }

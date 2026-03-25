@@ -1,7 +1,7 @@
-package com.r2s.auth.publisher;
+package com.r2s.user.publisher;
 
-import com.r2s.auth.entity.Outbox;
-import com.r2s.auth.repository.OutboxRepository;
+import com.r2s.user.entity.Outbox;
+import com.r2s.user.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -15,33 +15,34 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class OutboxPublisher {
+public class UserOutboxPublisher {
 
     private final OutboxRepository outboxRepository;
     private final RabbitTemplate rabbitTemplate;
 
     @Scheduled(fixedDelay = 1000)
     @Transactional
-    public void publishEvents() {
+    public void publishUserEvents() {
         List<Outbox> events = outboxRepository.findByStatus("PENDING");
-
         if (events.isEmpty()) return;
 
         for (Outbox event : events) {
             try {
-                // Gửi sang Exchange của RabbitMQ
-                // EXCHANGE và ROUTING_KEY nên khớp với cấu hình bên User-service
-                rabbitTemplate.convertAndSend("user.exchange", "user.created.routing.key", event.getPayload());
+                // Sử dụng EXCHANGE chung "user.exchange"
+                // Routing key: dựa vào event_type (USER_UPDATED hoặc USER_DELETED)
+                String routingKey = event.getEventType().equals("USER_UPDATED")
+                        ? "user.updated.routing.key"
+                        : "user.deleted.routing.key";
 
-                // Cập nhật trạng thái thành công
+                rabbitTemplate.convertAndSend("user.exchange", routingKey, event.getPayload());
+
                 event.setStatus("PROCESSED");
                 event.setProcessedAt(LocalDateTime.now());
                 outboxRepository.save(event);
 
-                log.info("🚀 [Auth-Outbox] Đã đẩy User {} sang RabbitMQ thành công!", event.getId());
+                log.info("[User-Outbox] Đã đẩy sự kiện {} sang Auth thành công!", event.getEventType());
             } catch (Exception e) {
-                log.error("❌ [Auth-Outbox] Lỗi khi đẩy tin nhắn ID {}: {}", event.getId(), e.getMessage());
-                // Không đổi trạng thái để lần quét sau (sau 1s) thử lại
+                log.error("[User-Outbox] Lỗi đẩy tin nhắn: {}", e.getMessage());
             }
         }
     }

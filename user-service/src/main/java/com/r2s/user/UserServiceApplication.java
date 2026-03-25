@@ -5,11 +5,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = {
         "com.r2s.user",
         "com.r2s.core"
 })
+@EnableScheduling
 public class UserServiceApplication {
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.configure()

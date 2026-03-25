@@ -11,12 +11,14 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class UserEventListener {
 
-    private final UserProfileRepository userRepository; // Lưu vào user_db
+    private final UserProfileRepository userRepository;
     private final ObjectMapper objectMapper;
 
     // QUAN TRỌNG: Tên queue phải khớp với queue khai báo ở RabbitMQConfig
@@ -29,14 +31,15 @@ public class UserEventListener {
             UserRequest request = objectMapper.readValue(message, UserRequest.class);
 
             // 2. Kiểm tra Idempotency (Chống trùng dữ liệu)
-            if (userRepository.existsByUsername(request.username())) {
-                log.warn("⚠️ User {} đã có Profile, bỏ qua.", request.username());
+            if (userRepository.existsById(request.id())) {
+                log.warn("User ID {} đã tồn tại, bỏ qua", request.id());
                 return;
             }
 
             // 3. Tạo Entity Profile (User bên User-Service)
             // Lưu ý: Không cần lưu Password ở bên này để bảo mật
             UserProfile userProfile = UserProfile.builder()
+                    .id(request.id())
                     .username(request.username())
                     .email(request.email())
                     .fullName(request.fullName())

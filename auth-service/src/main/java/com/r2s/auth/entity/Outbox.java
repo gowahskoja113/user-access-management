@@ -27,8 +27,10 @@ public class Outbox {
     @Column(columnDefinition = "TEXT")
     private String payload;
 
-    private String status;
+    @Builder.Default
+    private String status = "PENDING";
 
+    @org.hibernate.annotations.CreationTimestamp
     private LocalDateTime createdAt;
 
     private LocalDateTime processedAt;
