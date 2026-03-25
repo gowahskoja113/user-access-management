@@ -2,8 +2,9 @@ package com.r2s.user.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.auth.entity.User;
-import com.r2s.auth.repository.UserRepository;
+
+import com.r2s.user.entity.UserProfile;
+import com.r2s.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -15,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserEventListener {
 
-    private final UserRepository userRepository; // Lưu vào user_db
+    private final UserProfileRepository userRepository; // Lưu vào user_db
     private final ObjectMapper objectMapper;
 
     // QUAN TRỌNG: Tên queue phải khớp với queue khai báo ở RabbitMQConfig
@@ -35,15 +36,14 @@ public class UserEventListener {
 
             // 3. Tạo Entity Profile (User bên User-Service)
             // Lưu ý: Không cần lưu Password ở bên này để bảo mật
-            User profile = User.builder()
+            UserProfile userProfile = UserProfile.builder()
                     .username(request.username())
                     .email(request.email())
-                    .name(request.fullName())
-                    .enabled(true)
+                    .fullName(request.fullName())
                     .build();
 
-            userRepository.save(profile);
-            log.info("✅ [User-Service] Đã tạo hồ sơ cho User: {} thành công!", profile.getUsername());
+            userRepository.save(userProfile);
+            log.info("✅ [User-Service] Đã tạo hồ sơ cho User: {} thành công!", userProfile.getUsername());
 
         } catch (Exception e) {
             log.error("❌ [User-Service] Lỗi xử lý tin nhắn: {}", e.getMessage());

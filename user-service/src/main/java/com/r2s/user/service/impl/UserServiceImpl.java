@@ -1,14 +1,11 @@
 package com.r2s.user.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.r2s.auth.entity.Outbox;
-import com.r2s.auth.entity.User;
+import com.r2s.user.dto.request.response.UserResponse;
+import com.r2s.user.entity.UserProfile;
 import com.r2s.core.exception.CustomException;
-import com.r2s.auth.repository.OutboxRepository;
-import com.r2s.auth.repository.UserRepository;
+import com.r2s.user.repository.OutboxRepository;
+import com.r2s.user.repository.UserProfileRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
-import com.r2s.user.dto.request.UserRequest;
-import com.r2s.auth.dto.response.UserResponse;
 import com.r2s.user.mapper.UserMapper;
 import com.r2s.user.service.UserManagementService;
 import com.r2s.user.service.UserProfileService;
@@ -18,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,63 +23,25 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserManagementService, UserProfileService {
 
-    private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final OutboxRepository outboxRepository;
 
     @Override
-    @Transactional
-    public UserResponse createUser(UserRequest request) {
-        log.debug("Creating new user with username: {}", request.username());
-
-        if (userRepository.existsByUsername(request.username())) {
-            throw new CustomException("Username already exists: " + request.username());
-        }
-
-        if (userRepository.existsByEmail(request.email())) {
-            throw new CustomException("Email already exists: " + request.email());
-        }
-
-        User user = userMapper.toEntity(request);
-        user.setPassword(passwordEncoder.encode(request.password()));
-        User savedUser = userRepository.save(user);
-
-        try {
-            String jsonPayload = new ObjectMapper().writeValueAsString(request);
-
-            Outbox outbox = Outbox.builder()
-                    .aggregateType("USER")
-                    .eventType("USER_CREATED")
-                    .payload(jsonPayload)
-                    .status("PENDING")
-                    .createdAt(LocalDateTime.now())
-                    .build();
-
-            outboxRepository.save(outbox);
-
-        } catch (Exception e) {
-            log.error("Database constraint violation: {}", e.getMessage());
-            throw new CustomException("User creation failed. Username or Email likely already exists.");
-        }
-
-        return userMapper.toUserResponse(savedUser);
-    }
-
-    @Override
     public void deleteUser(String username) {
         log.debug("Deleting user with username: {}", username);
 
-        User user = userRepository.findByUsername(username)
+        UserProfile userProfile = userProfileRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException("User not found with username: " + username));
-        userRepository.delete(user);
+        userProfileRepository.delete(userProfile);
     }
 
     @Override
     public List<UserResponse> getAllUsers() {
         log.debug("Fetching all users from the database");
 
-        return userRepository.findAll()
+        return userProfileRepository.findAll()
                 .stream()
                 .map(userMapper::toUserResponse)
                 .collect(Collectors.toList());
@@ -94,18 +52,18 @@ public class UserServiceImpl implements UserManagementService, UserProfileServic
     public UserResponse updateUser(String username, UpdateUserRequest request) {
         log.debug("Updating user with username: {}", username);
 
-        User user = userRepository.findByUsername(username)
+        UserProfile user = userProfileRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException("User not found with username: " + username));
 
-        user.setName(request.name());
+        user.setFullName(request.name());
         user.setEmail(request.email());
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        return userMapper.toUserResponse(userProfileRepository.save(user));
     }
 
     @Override
     public UserResponse getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
+        return userProfileRepository.findByUsername(username)
                 .map(userMapper::toUserResponse)
                 .orElseThrow(() -> new CustomException("User not found with username: " + username));
     }

@@ -10,8 +10,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.r2s.user",
         "com.r2s.core"
 })
-@EnableJpaRepositories(basePackages = "com.r2s.core.repository")
-@EntityScan(basePackages = "com.r2s.core.entity")
 public class UserServiceApplication {
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.configure()

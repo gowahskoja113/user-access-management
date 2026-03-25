@@ -1,6 +1,6 @@
-package com.r2s.auth.repository;
+package com.r2s.user.repository;
 
-import com.r2s.auth.entity.Outbox;
+import com.r2s.user.entity.Outbox;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

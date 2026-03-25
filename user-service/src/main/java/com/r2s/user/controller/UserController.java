@@ -4,7 +4,7 @@ import com.r2s.core.response.ApiResponse;
 import com.r2s.core.response.ResponseBuilder;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.auth.dto.response.UserResponse;
+import com.r2s.user.dto.request.response.UserResponse;
 import com.r2s.user.service.UserManagementService;
 import com.r2s.user.service.UserProfileService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -95,25 +95,25 @@ public class UserController {
         return responseBuilder.buildSuccessResponse(updatedUser, "Updated user profile successfully");
     }
 
-    /**
-     * Create a new user
-     * @param userRequest User creation request
-     * @return Created user response
-     */
-    @Operation(summary = "Create a new user (Admin only)")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User created successfully"), // Code 200 vì bạn dùng responseBuilder bọc lại
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied")
-    })
-    @PostMapping("/create")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<UserResponse>> createUser(@Valid @RequestBody UserRequest userRequest) {
-        log.info("Creating new user with username: {}", userRequest.username());
-        UserResponse createdUser = userManagementService.createUser(userRequest);
-
-        return responseBuilder.buildSuccessResponse(createdUser, "User created successfully");
-    }
+//    /**
+//     * Create a new user
+//     * @param userRequest User creation request
+//     * @return Created user response
+//     */
+//    @Operation(summary = "Create a new user (Admin only)")
+//    @ApiResponses(value = {
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User created successfully"), // Code 200 vì bạn dùng responseBuilder bọc lại
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input data"),
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied")
+//    })
+//    @PostMapping("/create")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<ApiResponse<UserResponse>> createUser(@Valid @RequestBody UserRequest userRequest) {
+//        log.info("Creating new user with username: {}", userRequest.username());
+//        UserResponse createdUser = userManagementService.createUser(userRequest);
+//
+//        return responseBuilder.buildSuccessResponse(createdUser, "User created successfully");
+//    }
 
     /**
      * Delete a user (Admin only)

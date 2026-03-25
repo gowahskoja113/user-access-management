@@ -65,13 +65,11 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .map(Role::getName)
                 .collect(Collectors.toSet());
         try {
-            // QUAN TRỌNG: Tạo một Map hoặc một DTO chứa ID để gửi đi
-            // Đừng gửi thẳng 'request' vì nó không có trường ID
             java.util.Map<String, Object> payload = new java.util.HashMap<>();
-            payload.put("id", savedUser.getId()); // Lấy ID vừa được tạo từ DB
+            payload.put("id", savedUser.getId());
             payload.put("username", savedUser.getUsername());
             payload.put("email", savedUser.getEmail());
-            payload.put("fullName", savedUser.getName()); // Map đúng tên field bên User Service
+            payload.put("fullName", savedUser.getName());
             payload.put("roleName", targetRoleName);
 
             String jsonPayload = objectMapper.writeValueAsString(payload);
