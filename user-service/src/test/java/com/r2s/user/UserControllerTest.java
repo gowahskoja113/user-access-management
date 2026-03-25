@@ -1,11 +1,11 @@
 package com.r2s.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.r2s.core.entity.Role;
+import com.r2s.auth.entity.Role;
 import com.r2s.core.entity.RoleName;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.core.response.UserResponse;
+import com.r2s.auth.dto.response.UserResponse;
 import com.r2s.user.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

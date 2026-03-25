@@ -1,9 +1,9 @@
 package com.r2s.auth.config;
 
 import com.r2s.core.entity.RoleName;
-import com.r2s.core.entity.User;
-import com.r2s.core.repository.RoleRepository;
-import com.r2s.core.repository.UserRepository;
+import com.r2s.auth.entity.User;
+import com.r2s.auth.repository.RoleRepository;
+import com.r2s.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

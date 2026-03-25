@@ -8,7 +8,7 @@ import com.r2s.auth.service.impl.AuthServiceImpl;
 import com.r2s.auth.strategy.AuthenticationStrategy;
 import com.r2s.core.entity.RoleName;
 import com.r2s.core.exception.CustomException;
-import com.r2s.core.response.UserResponse;
+import com.r2s.auth.dto.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

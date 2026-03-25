@@ -1,20 +1,19 @@
 package com.r2s.user.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.r2s.core.entity.Outbox;
-import com.r2s.core.entity.User;
+import com.r2s.auth.entity.Outbox;
+import com.r2s.auth.entity.User;
 import com.r2s.core.exception.CustomException;
-import com.r2s.core.repository.OutboxRepository;
-import com.r2s.core.repository.UserRepository;
+import com.r2s.auth.repository.OutboxRepository;
+import com.r2s.auth.repository.UserRepository;
 import com.r2s.user.dto.request.UpdateUserRequest;
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.core.response.UserResponse;
+import com.r2s.auth.dto.response.UserResponse;
 import com.r2s.user.mapper.UserMapper;
 import com.r2s.user.service.UserManagementService;
 import com.r2s.user.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

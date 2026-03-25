@@ -11,8 +11,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "com.r2s.auth",
         "com.r2s.core"
 })
-@EnableJpaRepositories(basePackages = "com.r2s.core.repository")
-@EntityScan(basePackages = "com.r2s.core.entity")
 @EnableScheduling
 public class AuthServiceApplication {
     public static void main(String[] args) {

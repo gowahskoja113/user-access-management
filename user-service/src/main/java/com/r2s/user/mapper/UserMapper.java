@@ -1,11 +1,11 @@
 package com.r2s.user.mapper;
 
-import com.r2s.core.entity.Role;
+import com.r2s.auth.entity.Role;
 import com.r2s.core.entity.RoleName;
-import com.r2s.core.entity.User;
-import com.r2s.core.repository.RoleRepository;
+import com.r2s.auth.entity.User;
+import com.r2s.auth.repository.RoleRepository;
 import com.r2s.user.dto.request.UserRequest;
-import com.r2s.core.response.UserResponse;
+import com.r2s.auth.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

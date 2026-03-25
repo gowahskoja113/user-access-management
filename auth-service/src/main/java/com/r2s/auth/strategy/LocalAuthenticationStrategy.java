@@ -2,8 +2,8 @@ package com.r2s.auth.strategy;
 
 import com.r2s.auth.dto.request.LoginRequest;
 import com.r2s.auth.dto.response.AuthResponse;
-import com.r2s.core.entity.User;
-import com.r2s.core.repository.UserRepository;
+import com.r2s.auth.entity.User;
+import com.r2s.auth.repository.UserRepository;
 import com.r2s.core.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;

@@ -8,7 +8,7 @@ import com.r2s.auth.dto.response.AuthResponse;
 import com.r2s.auth.service.RegistrationService;
 import com.r2s.auth.service.impl.AuthServiceImpl;
 import com.r2s.core.entity.RoleName;
-import com.r2s.core.response.UserResponse;
+import com.r2s.auth.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

@@ -1,7 +1,7 @@
-package com.r2s.auth.outbox;
+package com.r2s.auth.publisher;
 
-import com.r2s.core.entity.Outbox;
-import com.r2s.core.repository.OutboxRepository;
+import com.r2s.auth.entity.Outbox;
+import com.r2s.auth.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

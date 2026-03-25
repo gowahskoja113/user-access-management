@@ -1,5 +1,6 @@
-package com.r2s.core.entity;
+package com.r2s.auth.entity;
 
+import com.r2s.core.entity.RoleName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

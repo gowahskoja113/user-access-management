@@ -8,7 +8,7 @@ import com.r2s.auth.service.AuthenticationService;
 import com.r2s.auth.service.RegistrationService;
 import com.r2s.auth.strategy.AuthenticationStrategy;
 import com.r2s.core.exception.CustomException;
-import com.r2s.core.response.UserResponse;
+import com.r2s.auth.dto.response.UserResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

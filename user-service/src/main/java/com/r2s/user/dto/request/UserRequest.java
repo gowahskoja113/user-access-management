@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
-
 public record UserRequest(
 
         @NotBlank(message = "Username không được để trống")

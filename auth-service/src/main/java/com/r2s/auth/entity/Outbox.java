@@ -1,4 +1,4 @@
-package com.r2s.core.entity;
+package com.r2s.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
