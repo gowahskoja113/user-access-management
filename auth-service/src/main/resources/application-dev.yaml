@@ -19,7 +19,6 @@ spring:
     table: flyway_schema_history_auth
     group: true
 
-  spring:
     rabbitmq:
       host: localhost
       port: 5672
@@ -34,3 +33,6 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+logging:
+  file:
+    path: F:\R2S\user-access-management\auth-service\logs

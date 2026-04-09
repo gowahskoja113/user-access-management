@@ -18,6 +18,7 @@ services:
     image: postgres:15
     container_name: auth-db
     environment:
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
       <<: *db-credentials
       POSTGRES_DB: auth_db
     ports:

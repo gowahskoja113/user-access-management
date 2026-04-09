@@ -25,3 +25,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  file:
+    path: F:\R2S\user-access-management\user-service\logs

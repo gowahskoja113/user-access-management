@@ -20,6 +20,9 @@ public class OutboxPublisher {
     private final OutboxRepository outboxRepository;
     private final RabbitTemplate rabbitTemplate;
 
+    public static final String EXCHANGE = "user.exchange";
+    public static final String ROUTING_KEY = "user.created.routing.key";
+
     @Scheduled(fixedDelay = 1000)
     @Transactional
     public void publishEvents() {
@@ -29,9 +32,7 @@ public class OutboxPublisher {
 
         for (Outbox event : events) {
             try {
-                // Gửi sang Exchange của RabbitMQ
-                // EXCHANGE và ROUTING_KEY nên khớp với cấu hình bên User-service
-                rabbitTemplate.convertAndSend("user.exchange", "user.created.routing.key", event.getPayload());
+                rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, event.getPayload());
 
                 // Cập nhật trạng thái thành công
                 event.setStatus("PROCESSED");
@@ -41,7 +42,6 @@ public class OutboxPublisher {
                 log.info("🚀 [Auth-Outbox] Đã đẩy User {} sang RabbitMQ thành công!", event.getId());
             } catch (Exception e) {
                 log.error("❌ [Auth-Outbox] Lỗi khi đẩy tin nhắn ID {}: {}", event.getId(), e.getMessage());
-                // Không đổi trạng thái để lần quét sau (sau 1s) thử lại
             }
         }
     }

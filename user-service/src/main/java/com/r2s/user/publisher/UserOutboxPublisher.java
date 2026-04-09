@@ -20,6 +20,9 @@ public class UserOutboxPublisher {
     private final OutboxRepository outboxRepository;
     private final RabbitTemplate rabbitTemplate;
 
+    public static final String UPDATE_ROUTING_KEY = "user.updated.routing.key";
+    public static final String DELETE_ROUTING_KEY = "user.deleted.routing.key";
+
     @Scheduled(fixedDelay = 1000)
     @Transactional
     public void publishUserEvents() {
@@ -30,9 +33,7 @@ public class UserOutboxPublisher {
             try {
                 // Sử dụng EXCHANGE chung "user.exchange"
                 // Routing key: dựa vào event_type (USER_UPDATED hoặc USER_DELETED)
-                String routingKey = event.getEventType().equals("USER_UPDATED")
-                        ? "user.updated.routing.key"
-                        : "user.deleted.routing.key";
+                String routingKey = event.getEventType().equals("USER_UPDATED") ? UPDATE_ROUTING_KEY : DELETE_ROUTING_KEY;
 
                 rabbitTemplate.convertAndSend("user.exchange", routingKey, event.getPayload());
 

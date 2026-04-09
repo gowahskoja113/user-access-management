@@ -20,7 +20,9 @@ public class AuthEventListener {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
-    @RabbitListener(queues = "auth.sync.from.user.queue")
+    public static final String QUEUE = "auth.sync.from.user.queue";
+
+    @RabbitListener(queues = QUEUE)
     @Transactional
     public void handleUserSyncFromProfile(String message) {
         log.info("📩 [Auth-Service] Nhận tín hiệu đồng bộ từ User-Service: {}", message);
@@ -28,8 +30,7 @@ public class AuthEventListener {
             JsonNode node = objectMapper.readTree(message);
             UUID userId = UUID.fromString(node.get("id").asText());
 
-            // Tự suy luận Event dựa trên nội dung (hoặc ge có thể gửi kèm eventType trong payload)
-            if (node.has("email")) { // Giả sử đây là UPDATE
+            if (node.has("email")) {
                 User user = userRepository.findById(userId).orElse(null);
                 if (user != null) {
                     user.setEmail(node.get("email").asText());
@@ -37,13 +38,14 @@ public class AuthEventListener {
                     userRepository.save(user);
                     log.info("✅ [Auth-Service] Đã cập nhật Email/Name cho User ID: {}", userId);
                 }
-            } else { // Giả sử đây là DELETE (payload chỉ có ID)
+            } else {
                 userRepository.deleteById(userId);
                 log.info("🗑️ [Auth-Service] Đã xóa User ID: {}", userId);
             }
 
         } catch (Exception e) {
             log.error("❌ [Auth-Service] Lỗi xử lý đồng bộ ngược: {}", e.getMessage());
+            throw new RuntimeException("Xử lý thất bại, yêu cầu RabbitMQ gửi lại!", e);
         }
     }
 }
