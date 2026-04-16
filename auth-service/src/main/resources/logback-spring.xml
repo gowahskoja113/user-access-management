@@ -1,54 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="./logs" />
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" />
+    <!-- Lấy config từ application.yml -->
+    <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="logs"/>
+    <springProperty scope="context" name="SERVICE_NAME" source="spring.application.name" defaultValue="app"/>
 
-    <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/app-info.log</file>
+    <!-- Pattern chuẩn microservice -->
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-}] [%X{spanId:-}] %-5level %logger{36} - %msg%n"/>
+
+    <!-- File appender (1 file duy nhất) -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${SERVICE_NAME}.log</file>
+
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/app-info.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/${SERVICE_NAME}.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
+
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/app-error.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/app-error.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
-        </encoder>
-    </appender>
-
+    <!-- Console appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <logger name="org.springframework.web" level="INFO" />
-    <logger name="com.r2s.auth" level="DEBUG" />
+    <!-- Logger config -->
+    <logger name="org.springframework.web" level="INFO"/>
 
+    <!-- Profile DEV -->
+    <springProfile name="dev">
+        <logger name="com.r2s" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Profile PROD -->
+    <springProfile name="prod">
+        <logger name="com.r2s" level="INFO"/>
+    </springProfile>
+
+    <!-- Root -->
     <root level="INFO">
-        <appender-ref ref="INFO_FILE" />
-        <appender-ref ref="ERROR_FILE" />
-        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="CONSOLE"/>
     </root>
 
 </configuration>

@@ -35,4 +35,4 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 logging:
   file:
-    path: F:\R2S\user-access-management\auth-service\logs
+    path: logs
