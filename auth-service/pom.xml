@@ -89,6 +89,10 @@
             <artifactId>byte-buddy-agent</artifactId>
             <version>1.15.10</version>
         </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-brave</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

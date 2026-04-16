@@ -28,4 +28,4 @@ spring:
 
 logging:
   file:
-    path: F:\R2S\user-access-management\user-service\logs
+    path: logs
